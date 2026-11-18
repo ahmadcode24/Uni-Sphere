@@ -5,6 +5,8 @@ import { createSessionToken, verifySessionToken, sanitizeNextUrl } from "../lib/
 
 async function runAuthTests() {
   console.log("🧪 Running Phase 1 Auth Unit & Business Rule Tests...\n");
+  const savedSmtp = process.env.SMTP_HOST;
+  delete process.env.SMTP_HOST;
 
   // 1. Check ADMIN rejection rule
   console.log("1. Checking ADMIN rejection in signup logic...");

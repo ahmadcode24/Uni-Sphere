@@ -57,7 +57,9 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
-      message: "Verification code sent to your console.",
+      message: process.env.SMTP_HOST
+        ? "Verification code sent to your email."
+        : "Verification code sent to your console.",
     });
 
     response.cookies.set({

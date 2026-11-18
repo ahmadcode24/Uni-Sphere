@@ -53,47 +53,44 @@ export async function generateAndSendOtp(userId: string, email: string) {
     },
   });
 
-  // Optional SMTP delivery or fallback to console.log when SMTP vars are missing
-  const hasSmtp = Boolean(
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
-  );
+  // Send via SMTP if SMTP_HOST is configured, otherwise fallback to console.log
+  if (process.env.SMTP_HOST) {
+    const port = Number(process.env.SMTP_PORT || 587);
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-  if (hasSmtp) {
     try {
-      const port = parseInt(process.env.SMTP_PORT || "587");
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port,
-        secure: port === 465,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
       await transporter.sendMail({
         from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
-        subject: `Your UniSphere Verification Code: ${code}`,
-        text: `Your UniSphere 6-digit verification code is: ${code}\n\nThis code will expire in 10 minutes.\nIf you did not request this code, please ignore this email.`,
-        html: `<div style="font-family: sans-serif; padding: 20px; color: #16202B;">
-          <h2 style="color: #0B7A55;">UniSphere Verification Code</h2>
-          <p>Please enter the following 6-digit code to complete your login:</p>
-          <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; padding: 12px 24px; background: #EEF2EC; display: inline-block; border: 2px solid #16202B; border-radius: 8px;">
+        subject: "Your UniSphere code",
+        text: `Your UniSphere code is ${code}. It expires in 10 minutes.`,
+        html: `<div style="font-family: sans-serif; padding: 24px; color: #16202B; max-width: 520px; border: 2px solid #16202B; border-radius: 12px; background: #FFFFFF;">
+          <h2 style="color: #0B7A55; margin-top: 0; font-size: 22px;">UniSphere Verification Code</h2>
+          <p style="font-size: 15px; line-height: 1.5; color: #16202B;">Please enter the following 6-digit verification code to complete your login:</p>
+          <div style="font-size: 36px; font-weight: 800; letter-spacing: 6px; padding: 14px 28px; background: #EEF2EC; display: inline-block; border: 2px solid #16202B; border-radius: 8px; margin: 12px 0;">
             ${code}
           </div>
-          <p style="margin-top: 16px; color: #666; font-size: 13px;">This code expires in 10 minutes. If you did not request it, you can safely ignore this email.</p>
+          <p style="margin-top: 16px; color: #555555; font-size: 13px;">This code <strong>expires in 10 minutes</strong>. If you did not request this verification code, please ignore this email.</p>
         </div>`,
       });
-    } catch (err) {
-      console.error("[OTP SMTP Send Error]:", err);
-      // Fallback to console in case SMTP credentials fail
-      console.log("\n========================================");
-      console.log(`[OTP FALLBACK] ${email} -> ${code}`);
-      console.log("========================================\n");
+    } catch (err: any) {
+      console.error("[SMTP Error]: Failed to send OTP email to", email, err.message || err);
+      throw new AppError(
+        "EMAIL_SEND_FAILED",
+        "Failed to send verification code email. Please verify SMTP configuration.",
+        500
+      );
     }
   } else {
-    // Fall back to console.log only when SMTP vars are missing
+    // Console.log fallback ONLY when SMTP_HOST is missing
     console.log("\n========================================");
     console.log(`[OTP] ${email} -> ${code}`);
     console.log("========================================\n");

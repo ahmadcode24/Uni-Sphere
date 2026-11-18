@@ -29,7 +29,9 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: "A new verification code has been printed to the server terminal.",
+      message: process.env.SMTP_HOST
+        ? "A new verification code has been sent to your email."
+        : "A new verification code has been printed to the server terminal.",
     });
   } catch (error: any) {
     return NextResponse.json(

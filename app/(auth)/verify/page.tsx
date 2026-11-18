@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, RotateCw, Terminal, AlertCircle } from "lucide-react";
+import { ArrowRight, RotateCw, Terminal, AlertCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function VerifyForm() {
@@ -152,13 +152,13 @@ function VerifyForm() {
         </p>
       </div>
 
-      {/* Terminal Callout Notice */}
+      {/* Verification Notice */}
       <div className="mb-5 p-3.5 bg-ink text-paper rounded-[12px] border-2 border-ink shadow-hard-sm flex items-start gap-3">
-        <Terminal className="w-5 h-5 text-marigold flex-shrink-0 mt-0.5" />
+        <Mail className="w-5 h-5 text-marigold flex-shrink-0 mt-0.5" />
         <div className="text-xs">
-          <p className="font-bold text-marigold uppercase tracking-wider">Server Terminal Notice:</p>
+          <p className="font-bold text-marigold uppercase tracking-wider">Verification Code Sent:</p>
           <p className="text-paper/80 mt-0.5">
-            Look at the terminal running the dev server to see your code:
+            Check your email inbox for your 6-digit code. In local dev mode without SMTP, check the server terminal:
           </p>
           <code className="block mt-1 font-mono text-[11px] bg-white/10 px-2 py-0.5 rounded text-white">
             [OTP] user@... -&gt; 123456
