@@ -14,11 +14,11 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const subEvent = await updateSubEvent(session.id, params.id, body);
+    const subEvent = await updateSubEvent(session.userId, params.id, body);
     return NextResponse.json({ subEvent });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to update sub-event" }, { status: 400 });
   }

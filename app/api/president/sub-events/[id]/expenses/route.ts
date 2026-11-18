@@ -22,14 +22,14 @@ export async function GET(
       },
     });
 
-    if (!subEvent || subEvent.megaEvent.presidentId !== session.id) {
+    if (!subEvent || subEvent.megaEvent.presidentId !== session.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json({ expenses: subEvent.expenses });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to load expenses" }, { status: 500 });
   }
@@ -46,11 +46,11 @@ export async function POST(
     }
 
     const body = await req.json();
-    const expense = await addSubEventExpense(session.id, params.id, body);
+    const expense = await addSubEventExpense(session.userId, params.id, body);
     return NextResponse.json({ expense }, { status: 201 });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to add expense" }, { status: 400 });
   }

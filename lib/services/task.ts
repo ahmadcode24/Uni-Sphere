@@ -119,7 +119,8 @@ export async function updateTask(
     include: { event: { include: { society: true } } },
   });
 
-  if (!task || !task.event) throw new AppError("TASK_NOT_FOUND", "Event task not found", 404);
+  if (!task || !task.event || !task.eventId) throw new AppError("TASK_NOT_FOUND", "Event task not found", 404);
+  const eventId = task.eventId;
 
   const isPresident =
     userRole === "PRESIDENT" && task.event.society.presidentId === userId;
@@ -165,7 +166,7 @@ export async function updateTask(
       const invite = await prisma.invitation.findUnique({
         where: {
           eventId_studentId: {
-            eventId: task.eventId,
+            eventId,
             studentId: data.assigneeId,
           },
         },

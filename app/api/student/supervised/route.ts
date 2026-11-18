@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     }
 
     const subEvents = await prisma.subEvent.findMany({
-      where: { supervisorId: session.id },
+      where: { supervisorId: session.userId },
       select: {
         id: true,
         title: true,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ subEvents: sanitized });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to load supervised sub-events" }, { status: 500 });
   }

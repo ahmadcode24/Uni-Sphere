@@ -13,11 +13,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const megaEvent = await getAdminMegaEvent(session.id, params.id);
+    const megaEvent = await getAdminMegaEvent(session.userId, params.id);
     return NextResponse.json({ megaEvent });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to get Mega Event" }, { status: 500 });
   }
@@ -34,11 +34,11 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const megaEvent = await updateMegaEvent(session.id, params.id, body);
+    const megaEvent = await updateMegaEvent(session.userId, params.id, body);
     return NextResponse.json({ megaEvent });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to update Mega Event" }, { status: 400 });
   }

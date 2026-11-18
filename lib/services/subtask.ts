@@ -7,7 +7,7 @@ export const CreateSubTaskSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters").max(120),
   description: z.string().optional().default(""),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).default("MEDIUM"),
-  dueDate: z.string().min(1, "Due date is required"),
+  dueDate: z.string().optional(),
   assigneeId: z.string().nullable().optional(),
 });
 
@@ -23,7 +23,7 @@ export const UpdateSubTaskPresidentSchema = z.object({
 export async function createSubEventTask(
   presidentId: string,
   subEventId: string,
-  rawInput: z.infer<typeof CreateSubTaskSchema>
+  rawInput: z.input<typeof CreateSubTaskSchema>
 ) {
   const subEvent = await prisma.subEvent.findUnique({
     where: { id: subEventId },
@@ -50,7 +50,7 @@ export async function createSubEventTask(
       title: parsed.title.trim(),
       description: parsed.description || "",
       priority: parsed.priority,
-      dueDate: new Date(parsed.dueDate),
+      dueDate: parsed.dueDate ? new Date(parsed.dueDate) : new Date(subEvent.date),
       status: "TODO",
       assigneeId: parsed.assigneeId || null,
     },

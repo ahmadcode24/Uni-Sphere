@@ -14,11 +14,11 @@ export async function POST(
     }
 
     const body = await req.json();
-    const subEvent = await createSubEvent(session.id, params.id, body);
+    const subEvent = await createSubEvent(session.userId, params.id, body);
     return NextResponse.json({ subEvent }, { status: 201 });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to create sub-event" }, { status: 400 });
   }

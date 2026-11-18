@@ -79,6 +79,7 @@ async function testPhaseD() {
   const task2 = await createSubEventTask(presId, sub.id, {
     title: "Unassigned task for supervisor only",
     description: "Test reassignment",
+    priority: "MEDIUM",
     dueDate: "2026-11-26",
     assigneeId: null,
   });

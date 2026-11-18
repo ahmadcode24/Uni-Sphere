@@ -16,7 +16,8 @@
     "test:societies": "tsx scripts/test-phase2-societies.ts",
     "test:events": "tsx scripts/test-phase3-events.ts",
     "test:volunteers": "tsx scripts/test-phase4-volunteers-tasks-expenses.ts",
-    "test:rubric": "tsx scripts/test-rubric-master.ts"
+    "test:rubric": "tsx scripts/test-rubric-master.ts",
+    "test:task2": "tsx scripts/test-task2.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

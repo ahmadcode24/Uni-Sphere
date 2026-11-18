@@ -86,6 +86,9 @@ export async function requireUser(allowedRoles?: string[]): Promise<SessionPaylo
   return user;
 }
 
+// Alias for convenience across API route handlers
+export const getSession = getSessionUser;
+
 // 6. Safe next url validator (prevents open redirects)
 export function sanitizeNextUrl(next: string | null | undefined, defaultPath: string): string {
   if (!next) return defaultPath;

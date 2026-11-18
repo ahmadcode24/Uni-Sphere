@@ -14,11 +14,11 @@ export async function POST(
     }
 
     const body = await req.json();
-    const updated = await allocateSubEventBudget(session.id, params.id, Number(body.amount));
+    const updated = await allocateSubEventBudget(session.userId, params.id, Number(body.amount));
     return NextResponse.json({ subEvent: updated });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to allocate budget" }, { status: 400 });
   }

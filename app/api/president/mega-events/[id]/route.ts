@@ -13,11 +13,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const megaEvent = await getPresidentMegaEvent(session.id, params.id);
+    const megaEvent = await getPresidentMegaEvent(session.userId, params.id);
     return NextResponse.json({ megaEvent });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to get Mega Event" }, { status: 500 });
   }

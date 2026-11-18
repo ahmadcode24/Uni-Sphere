@@ -54,7 +54,7 @@ export async function GET(
       },
     });
 
-    if (!subEvent || subEvent.supervisorId !== session.id) {
+    if (!subEvent || subEvent.supervisorId !== session.userId) {
       return NextResponse.json(
         { error: "You are not the designated supervisor of this sub-event." },
         { status: 403 }
@@ -75,7 +75,7 @@ export async function GET(
     });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to load sub-event" }, { status: 500 });
   }

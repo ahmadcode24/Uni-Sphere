@@ -352,68 +352,6 @@ export default function PresidentMegaEventDetailPage({
     }
   };
 
-  const handleAllocate = async (subId: string) => {
-    setAllocError("");
-    setAllocLoading(subId);
-    const amount = Number(allocAmounts[subId] || 0);
-
-    try {
-      const res = await fetch(`/api/president/sub-events/${subId}/allocation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to allocate budget");
-      if (refresh) refresh();
-    } catch (err: any) {
-      setAllocError(err.message || "Failed to allocate budget");
-    } finally {
-      setAllocLoading(null);
-    }
-  };
-
-  const openAddExpenseModal = (sub: any) => {
-    setExpSubEvent(sub);
-    setExpForm({
-      title: "",
-      amount: 1000,
-      note: "",
-      spentOn: sub.date || new Date().toISOString().split("T")[0],
-    });
-    setExpError("");
-    setExpModalOpen(true);
-  };
-
-  const handleExpenseSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!expSubEvent) return;
-    setExpError("");
-    setExpSaving(true);
-
-    try {
-      const res = await fetch(`/api/president/sub-events/${expSubEvent.id}/expenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: expForm.title,
-          amount: Number(expForm.amount),
-          note: expForm.note,
-          spentOn: expForm.spentOn,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add expense");
-
-      setExpModalOpen(false);
-      if (refresh) refresh();
-    } catch (err: any) {
-      setExpError(err.message || "Failed to add expense");
-    } finally {
-      setExpSaving(false);
-    }
-  };
-
   if (loading || !mega) {
     return (
       <div className="p-8 max-w-5xl mx-auto space-y-4">

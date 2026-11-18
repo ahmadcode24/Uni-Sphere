@@ -22,8 +22,9 @@ export async function allocateSubEventBudget(
   const parsed = AllocateBudgetSchema.parse({ amount: rawAmount });
   const amount = parsed.amount;
 
-  return prisma.$transaction(async (tx) => {
-    // 1. Fetch subEvent to get megaEventId
+  return prisma.$transaction(
+    async (tx) => {
+      // 1. Fetch subEvent to get megaEventId
     const subEvent = await tx.subEvent.findUnique({
       where: { id: subEventId },
       include: { megaEvent: true },
@@ -76,7 +77,9 @@ export async function allocateSubEventBudget(
     });
 
     return updated;
-  });
+    },
+    { timeout: 15000, maxWait: 10000 }
+  );
 }
 
 export async function addSubEventExpense(
@@ -158,5 +161,7 @@ export async function addSubEventExpense(
     }
 
     return expense;
-  });
+    },
+    { timeout: 15000, maxWait: 10000 }
+  );
 }

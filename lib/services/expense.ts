@@ -128,7 +128,7 @@ export async function updateExpense(
       include: { event: { include: { society: true } } },
     });
 
-    if (!expense) throw new AppError("NOT_FOUND", "Expense record not found", 404);
+    if (!expense || !expense.event) throw new AppError("NOT_FOUND", "Expense record not found", 404);
     if (expense.event.society.presidentId !== presidentId) {
       throw new AppError("FORBIDDEN", "Unauthorized to update this expense.", 403);
     }
@@ -185,7 +185,7 @@ export async function deleteExpense(presidentId: string, expenseId: string) {
       include: { event: { include: { society: true } } },
     });
 
-    if (!expense) throw new AppError("NOT_FOUND", "Expense not found", 404);
+    if (!expense || !expense.event) throw new AppError("NOT_FOUND", "Expense not found", 404);
     if (expense.event.society.presidentId !== presidentId) {
       throw new AppError("FORBIDDEN", "Unauthorized to delete this expense.", 403);
     }

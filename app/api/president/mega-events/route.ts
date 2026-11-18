@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const megaEvents = await listPresidentMegaEvents(session.id);
+    const megaEvents = await listPresidentMegaEvents(session.userId);
     return NextResponse.json({ megaEvents });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to list Mega Events" }, { status: 500 });
   }

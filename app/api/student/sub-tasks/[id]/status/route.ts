@@ -20,11 +20,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid task status." }, { status: 400 });
     }
 
-    const task = await updateSubEventTaskStatus(session.id, session.role, params.id, status);
+    const task = await updateSubEventTaskStatus(session.userId, session.role, params.id, status);
     return NextResponse.json({ task });
   } catch (err: any) {
     if (err instanceof AppError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: err.statusCode });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     return NextResponse.json({ error: err.message || "Failed to update task status" }, { status: 400 });
   }
