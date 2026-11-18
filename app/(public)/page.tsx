@@ -7,6 +7,7 @@ import { fmtPKT, fmtPKTDateOnly, fmtPKTTimeOnly } from "@/lib/time";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PublicNavAuth } from "@/components/ui/public-nav-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -85,23 +86,7 @@ export default async function LandingPage() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <Link href="/events">
-              <Button variant="ghost" size="sm">
-                Browse events
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="secondary" size="sm">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button variant="primary" size="sm">
-                Sign up
-              </Button>
-            </Link>
-          </div>
+          <PublicNavAuth />
         </div>
       </header>
 

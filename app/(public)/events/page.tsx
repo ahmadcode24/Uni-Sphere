@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Calendar, MapPin, Clock, ArrowRight, Compass } from "lucide-react";
+import { Search, Calendar, MapPin, Clock, ArrowRight, Compass, LogOut } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,11 +73,24 @@ export default function BrowseEventsPage() {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <Link href={user.role === "PRESIDENT" ? "/president" : user.role === "ADMIN" ? "/admin" : "/student"}>
-                <Button variant="primary" size="sm">
-                  Go to Dashboard
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href={user.role === "PRESIDENT" ? "/president" : user.role === "ADMIN" ? "/admin" : "/student"}>
+                  <Button variant="primary" size="sm">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+                <button
+                  onClick={async () => {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/login";
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-paper hover:bg-rose hover:text-white text-ink border-2 border-ink rounded-[10px] shadow-hard-sm text-xs font-bold transition-all active:translate-y-0.5"
+                  title="Log out"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose hover:text-white" />
+                  <span>Log out</span>
+                </button>
+              </div>
             ) : (
               <>
                 <Link href="/login">

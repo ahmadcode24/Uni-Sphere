@@ -139,10 +139,10 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
-      router.refresh();
     } catch {
-      router.push("/login");
+      // ignore
+    } finally {
+      window.location.href = "/login";
     }
   };
 
@@ -184,21 +184,20 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
         </nav>
 
         {/* User Card & Logout */}
-        <div className="p-4 border-t-2 border-paper/15 bg-black/20">
-          <div className="flex items-center justify-between">
-            <div className="truncate mr-2">
-              <p className="text-sm font-bold text-paper truncate">{user.name}</p>
-              <p className="text-xs text-paper/60 truncate">{user.email}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Log out"
-              aria-label="Log out"
-              className="p-2 text-paper/70 hover:text-rose hover:bg-paper/10 rounded-[8px] transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+        <div className="p-4 border-t-2 border-paper/15 bg-black/20 space-y-3">
+          <div className="truncate">
+            <p className="text-sm font-bold text-paper truncate">{user.name}</p>
+            <p className="text-xs text-paper/60 truncate">{user.email}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Log out"
+            aria-label="Log out"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-paper/10 hover:bg-rose hover:text-white text-paper text-xs font-bold rounded-[8px] border border-paper/20 transition-all shadow-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log out</span>
+          </button>
         </div>
       </aside>
 
@@ -285,6 +284,16 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
                 <p className="text-ink/60 text-[10px] uppercase font-semibold">{role}</p>
               </div>
             </div>
+
+            {/* Header Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-paper hover:bg-rose hover:text-white text-ink border-2 border-ink rounded-[10px] shadow-hard-sm text-xs font-bold transition-all active:translate-y-0.5 group"
+              title="Log out of session"
+            >
+              <LogOut className="w-4 h-4 text-rose group-hover:text-white transition-colors" />
+              <span>Log out</span>
+            </button>
           </div>
         </header>
 

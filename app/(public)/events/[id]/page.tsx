@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   XCircle,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,11 +220,24 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
                 </Button>
               </Link>
             ) : (
-              <Link href={user.role === "PRESIDENT" ? "/president" : user.role === "ADMIN" ? "/admin" : "/student"}>
-                <Button variant="secondary" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href={user.role === "PRESIDENT" ? "/president" : user.role === "ADMIN" ? "/admin" : "/student"}>
+                  <Button variant="secondary" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+                <button
+                  onClick={async () => {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/login";
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-paper hover:bg-rose hover:text-white text-ink border-2 border-ink rounded-[10px] shadow-hard-sm text-xs font-bold transition-all active:translate-y-0.5"
+                  title="Log out"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose hover:text-white" />
+                  <span>Log out</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
