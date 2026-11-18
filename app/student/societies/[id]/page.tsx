@@ -289,3 +289,4 @@ export default function StudentSocietyDetailPage({ params }: { params: { id: str
     </AppShell>
   );
 }
+

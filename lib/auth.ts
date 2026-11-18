@@ -95,3 +95,4 @@ export function sanitizeNextUrl(next: string | null | undefined, defaultPath: st
   }
   return defaultPath;
 }
+

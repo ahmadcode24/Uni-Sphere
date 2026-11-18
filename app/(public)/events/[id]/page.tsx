@@ -381,3 +381,4 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
     </div>
   );
 }
+

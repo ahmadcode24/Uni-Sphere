@@ -417,3 +417,4 @@ export async function cancelEvent(presidentId: string, eventId: string) {
 
   return updated;
 }
+

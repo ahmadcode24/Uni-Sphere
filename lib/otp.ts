@@ -165,3 +165,4 @@ export async function verifyOtpCode(userId: string, enteredCode: string) {
 
   return user;
 }
+

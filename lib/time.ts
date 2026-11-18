@@ -41,3 +41,4 @@ export const schedule = (
   if (now <= end) return "ONGOING";
   return "COMPLETED";
 };
+

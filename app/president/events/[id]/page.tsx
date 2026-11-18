@@ -568,3 +568,4 @@ export default function PresidentEventDetailPage({ params }: { params: { id: str
     </AppShell>
   );
 }
+

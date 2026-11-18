@@ -130,3 +130,4 @@ runAuthTests()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

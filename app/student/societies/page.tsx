@@ -183,3 +183,4 @@ export default function StudentSocietiesPage() {
     </AppShell>
   );
 }
+

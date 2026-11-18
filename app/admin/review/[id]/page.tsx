@@ -250,3 +250,4 @@ export default function AdminReviewPage({ params }: { params: { id: string } }) 
     </AppShell>
   );
 }
+
