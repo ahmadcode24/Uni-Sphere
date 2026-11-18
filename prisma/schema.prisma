@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          String         // STUDENT | PRESIDENT | ADMIN
+  createdAt     DateTime       @default(now())
+  society       Society?       @relation("President")
+  memberships   Membership[]
+  registrations Registration[]
+  invitations   Invitation[]
+  tasks         Task[]         @relation("Assignee")
+  notifications Notification[]
+  otps          OtpCode[]
+}
+
+model OtpCode {
+  id            String    @id @default(cuid())
+  userId        String
+  codeHash      String
+  expiresAt     DateTime
+  attempts      Int       @default(0)
+  usedAt        DateTime?
+  invalidatedAt DateTime?
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model Society {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  description  String
+  category     String
+  contactEmail String
+  contactPhone String?
+  logoUrl      String?
+  presidentId  String       @unique
+  createdAt    DateTime     @default(now())
+  president    User         @relation("President", fields: [presidentId], references: [id])
+  memberships  Membership[]
+  events       Event[]
+  meetings     Meeting[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  societyId String
+  studentId String
+  status    String   @default("PENDING") // PENDING | APPROVED | REJECTED | REMOVED
+  label     String   @default("MEMBER")  // MEMBER | CORE (bonus)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  society   Society  @relation(fields: [societyId], references: [id])
+  student   User     @relation(fields: [studentId], references: [id])
+
+  @@unique([societyId, studentId])
+}
+
+model Event {
+  id                   String         @id @default(cuid())
+  societyId            String
+  title                String
+  description          String
+  venue                String
+  startAt              DateTime
+  endAt                DateTime
+  registrationDeadline DateTime
+  capacity             Int
+  proposedBudget       Int
+  approvedBudget       Int?
+  approvalStatus       String         @default("DRAFT") // DRAFT|PENDING|APPROVED|REJECTED
+  hasBeenApproved      Boolean        @default(false)
+  isCancelled          Boolean        @default(false)
+  adminRemarks         String?
+  decidedAt            DateTime?
+  submittedAt          DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  society              Society        @relation(fields: [societyId], references: [id])
+  registrations        Registration[]
+  invitations          Invitation[]
+  tasks                Task[]
+  expenses             Expense[]
+
+  @@index([approvalStatus, startAt])
+}
+
+model Registration {
+  id        String   @id @default(cuid())
+  eventId   String
+  studentId String
+  status    String   @default("REGISTERED") // REGISTERED | CANCELLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event    @relation(fields: [eventId], references: [id])
+  student   User     @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId])
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  eventId     String
+  studentId   String
+  status      String    @default("PENDING") // PENDING | ACCEPTED | DECLINED | WITHDRAWN(bonus)
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+  event       Event     @relation(fields: [eventId], references: [id])
+  student     User      @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  eventId     String
+  title       String
+  description String
+  priority    String   @default("MEDIUM") // LOW|MEDIUM|HIGH
+  dueDate     DateTime
+  status      String   @default("TODO") // TODO|IN_PROGRESS|COMPLETED
+  assigneeId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  event       Event    @relation(fields: [eventId], references: [id])
+  assignee    User?    @relation("Assignee", fields: [assigneeId], references: [id])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  eventId   String
+  title     String
+  amount    Int
+  note      String?
+  spentOn   DateTime
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, readAt])
+}
+
+model Meeting {
+  id          String          @id @default(cuid())
+  societyId   String
+  title       String
+  startAt     DateTime
+  location    String
+  agenda      String
+  isCancelled Boolean         @default(false)
+  society     Society         @relation(fields: [societyId], references: [id])
+  invites     MeetingInvite[]
+}
+
+model MeetingInvite {
+  id        String  @id @default(cuid())
+  meetingId String
+  studentId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+
+  @@unique([meetingId, studentId])
+}

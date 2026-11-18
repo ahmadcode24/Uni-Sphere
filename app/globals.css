@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #EEF2EC;
+  --surface: #FFFFFF;
+  --ink: #16202B;
+  --emerald: #0B7A55;
+  --marigold: #FFB703;
+  --rose: #E63462;
+  --sky: #3FA7D6;
+  --mist: #D9E2DA;
+}
+
+body {
+  color: var(--ink);
+  background-color: var(--paper);
+  font-family: var(--font-figtree), sans-serif;
+  min-height: 100vh;
+}
+
+/* Hard outline button press & interactives */
+.btn-press {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.btn-press:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+.btn-press:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0 var(--ink) !important;
+}
+
+/* Custom focus ring */
+*:focus-visible {
+  outline: 3px solid var(--marigold);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
