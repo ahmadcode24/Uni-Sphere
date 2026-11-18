@@ -10,6 +10,7 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:task2": "tsx scripts/seed-task2-demo.ts",
     "setup": "npm i && prisma db push && tsx prisma/seed.ts",
     "mail:test": "tsx scripts/test-mail.ts",
     "test:auth": "tsx scripts/test-phase1-auth.ts",

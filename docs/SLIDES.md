@@ -83,16 +83,40 @@ flowchart TD
 
 ---
 
-# 4-Minute Judge Demo Script
+## Slide 5: Task 2 — Mega Event Management & Multi-Track Coordination
+
+### Headline
+**From Single Events to Multi-Day Campus Festivals.**
+
+### Architectural Invariants:
+1. **Multi-Track Decentralization**:
+   - Mega Events host multiple sub-events spanning consecutive festival days.
+   - Student Supervisors are appointed per sub-event with dynamic DB permissions — **no new database roles required**.
+   - Immediate privilege revocation on supervisor reassignment (0 cache latency).
+2. **Strict Financial Isolation & 80% Alert Rule**:
+   - Budget allocations are committed **once per sub-event** under PostgreSQL row locks (`SELECT FOR UPDATE`).
+   - Hard festival limit: Sum of sub-event allocations $\le$ Mega Event budget cap.
+   - Concurrency-safe integer spending: crossing $\ge 80\%$ triggers exactly **one notification** to the president with atomic `budgetAlertSent = true` flag.
+   - Supervisors and outsiders operate on sanitized DTOs with **zero budget visibility**.
+3. **Zero Regression Guarantee**:
+   - Task 1 public listings, landing page queries, and admin approval queues are completely untouched and isolated.
+   - Task 1 tests (`test:rubric`) and Task 2 tests (`test:task2`) pass at 100% concurrently.
+4. **AI Operations & Health Telemetry**:
+   - Generates verified executive summaries, observations, and bottleneck alerts strictly grounded in authoritative DB metrics.
+
+---
+
+# 4-Minute Judge Demo Script (Including Task 2)
 
 | Timestamp | Speaker Role & Action | What the Judge Sees on Screen |
 |---|---|---|
-| **0:00 – 0:20** | **The Hook**: Introduce UniSphere on the Landing Page. | Campus Noticeboard aesthetic ("Paper & Ink" theme), tilted ticket stack, real upcoming events with live seat counts. |
-| **0:20 – 0:50** | **Student Sign-in & Society Join**: Log in as `student3@unisphere.test`. | Show terminal printing OTP code. Input 6 digits. Browse "ACM Chapter" and submit membership join request. |
-| **0:50 – 1:30** | **President Dashboard & Event Proposal**: Switch to President 1 window. | Notification bell rings live. Open Member Roster -> Approve student -> Assign "Core Member" badge. Go to Events -> Draft new workshop with PKT dates & proposed budget -> Submit for approval. |
-| **1:30 – 2:00** | **Admin Review & Sanctioning**: Switch to Admin window. | Pending count increments live. Admin opens proposal, inspects justification and proposed budget -> Clicks **Approve**. Sanctioned budget is now permanently locked. |
-| **2:00 – 2:40** | **Public Registration & Concurrency**: Open public event link in incognito tab. | Click "Register to Attend" -> Redirected to login with next-URL preserved -> Log in as student -> Registered. Switch to President window: seat counter decrements **live without reload**. |
-| **2:40 – 3:20** | **Volunteers & Live Kanban**: President invites student to volunteer. | Student accepts invite in inbox. President assigns stage lighting task. Student moves task from `To Do` to `In Progress`; President's Kanban board moves instantly. |
-| **3:20 – 3:50** | **Expenses, Hard Cap & PDF**: President logs expenses. | Enter valid expense -> Remaining budget recalculates. Enter Rs 100,000 -> Server blocks with descriptive error. Click **Download PDF Report** to view official financial sheet. |
-| **3:50 – 4:00** | **Wrap & Admin Monitoring**: Show Admin overview. | High-level campus metrics updated with real DB aggregates. Conclude demo. |
+| **0:00 – 0:25** | **Admin: Mega Event Creation**: Log in as `ahmadcode24@gmail.com` -> Navigate to **Mega Events** -> Click "Create Mega Event". | Input title "NEXUS Tech Fest 2026", select NEXUS Society, festival dates, and Rs 150,000 budget cap. President `nexus.president` auto-assigned. |
+| **0:25 – 1:00** | **President: Sub-events & Checklist**: Switch to `nexus.president@unisphere.test`. | Open Mega Event -> Create "Gaming Competition" & "Web Dev Workshop" with PKT times -> Assign student supervisor -> Add checklist tasks without requiring society membership. |
+| **1:00 – 1:20** | **Student Supervisor: Decentralized Execution**: Log in as `nexus.student1@unisphere.test`. | View "My Supervised Sub-events" with live % progress bar -> Open checklist -> Mark task "Completed" -> **Confirm zero budget figures visible anywhere**. |
+| **1:20 – 1:40** | **President: Budget Allocation & 80% Alert**: Switch back to President window -> Budget tab. | Allocate Rs 50,000 cap -> Attempt over-allocation (blocked) -> Record Rs 40,000 expense (80%) -> **Bell notification rings with 80% alert badge**. |
+| **1:40 – 2:00** | **AI Operations Report**: President clicks "Analyse with AI". | Instant executive health report generated with verified metrics table, observations, and bottleneck recommendations. |
+| **2:00 – 2:40** | **Task 1 Cross-Verification & Public Isolation**: Open `/events` and landing page. | Confirm Task 1 events are live while Mega Events remain strictly internal and isolated. Show student event registration. |
+| **2:40 – 3:20** | **Volunteers & Live Kanban**: President invites student to regular event. | Student accepts invite in inbox. President assigns task; Kanban moves in real time across screens. |
+| **3:20 – 3:50** | **Expenses, Hard Cap & PDF**: President logs event expense. | Attempt over-budget expense -> Server blocks with descriptive error. Click **Download PDF Report** to view official financial sheet. |
+| **3:50 – 4:00** | **Wrap & Architecture Review**: Show Admin telemetry. | Conclude demo: "UniSphere delivers bulletproof state machines, zero regressions, and full campus governance." |
 

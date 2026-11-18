@@ -19,6 +19,9 @@ import {
   Trash2,
   ListTodo,
   CheckSquare,
+  Copy,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card } from "@/components/ui/card";
@@ -88,6 +91,44 @@ export default function PresidentMegaEventDetailPage({
 
   // Filter in checklist
   const [checklistFilter, setChecklistFilter] = useState<string>("ALL");
+
+  // AI Operations Report State
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiData, setAiData] = useState<any>(null);
+  const [aiError, setAiError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const fetchAiReport = async () => {
+    setAiLoading(true);
+    setAiError("");
+    setAiData(null);
+    setAiModalOpen(true);
+
+    try {
+      const res = await fetch(`/api/president/mega-events/${params.id}/ai-report`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate AI report");
+      }
+      setAiData(data);
+    } catch (err: any) {
+      setAiError(err.message || "Failed to generate AI report");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleCopyAiReport = () => {
+    if (!aiData?.report) return;
+    const r = aiData.report;
+    const text = `Mega Event AI Operations Report: ${mega?.title || ""}\n\nSummary:\n${r.summary}\n\nKey Observations:\n${r.observations.map((o: string) => `- ${o}`).join("\n")}\n\nPotential Issues:\n${r.issues.map((i: string) => `- ${i}`).join("\n")}\n\nRecommendations:\n${r.recommendations.map((rec: string, idx: number) => `${idx + 1}. ${rec}`).join("\n")}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const { data: liveMega, refresh } = useLive<{ megaEvent: any }>(
     params.id ? `/api/president/mega-events/${params.id}` : null,
@@ -400,7 +441,7 @@ export default function PresidentMegaEventDetailPage({
               </p>
             </div>
 
-            <div className="flex flex-col items-end gap-1 border-t-2 md:border-t-0 md:border-l-2 border-ink pt-4 md:pt-0 md:pl-6 flex-shrink-0">
+            <div className="flex flex-col items-start md:items-end gap-1 border-t-2 md:border-t-0 md:border-l-2 border-ink pt-4 md:pt-0 md:pl-6 flex-shrink-0">
               <span className="text-xs font-extrabold uppercase text-ink/70">Festival Dates</span>
               <p className="font-display font-extrabold text-lg text-ink flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-ink" /> {mega.startDate} to {mega.endDate}
@@ -408,6 +449,15 @@ export default function PresidentMegaEventDetailPage({
               <span className="text-xs font-bold text-emerald mt-1">
                 Budget Cap: Rs {mega.overallBudget?.toLocaleString()} PKR
               </span>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={fetchAiReport}
+                className="mt-2.5 bg-sky hover:bg-sky/90 text-ink border-2 border-ink shadow-hard-sm text-xs font-bold flex items-center gap-1.5"
+                title="Generate verified AI Operations Report"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-ink" /> Analyse with AI
+              </Button>
             </div>
           </div>
         </Card>
@@ -1247,6 +1297,187 @@ export default function PresidentMegaEventDetailPage({
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 4: AI OPERATIONS & HEALTH REPORT */}
+        {aiModalOpen && (
+          <div className="fixed inset-0 z-50 bg-ink/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface border-2 border-ink rounded-[20px] shadow-hard-xl max-w-2xl w-full p-6 md:p-8 space-y-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-start justify-between pb-4 border-b-2 border-mist">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-sky/20 border-2 border-ink flex items-center justify-center text-sky">
+                    <Sparkles className="w-5 h-5 text-ink" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-xl text-ink">
+                      AI Operations & Health Report
+                    </h3>
+                    <p className="text-xs text-ink/70">
+                      Live verifiable operations telemetry for {mega.title}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(false)}
+                  className="p-1 hover:bg-mist rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-ink" />
+                </button>
+              </div>
+
+              {/* Loading State */}
+              {aiLoading && (
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-8 h-8 border-4 border-emerald border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm font-bold text-ink">Analyzing festival metrics and sub-event operations...</p>
+                  <p className="text-xs text-ink/60">Computing progress telemetry, budget utilization, and task completion.</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {aiError && !aiLoading && (
+                <div className="p-4 bg-rose/10 border-2 border-rose rounded-[12px] space-y-2">
+                  <div className="flex items-center gap-2 text-rose font-bold text-sm">
+                    <AlertCircle className="w-4 h-4" /> Error generating report
+                  </div>
+                  <p className="text-xs text-ink/80">{aiError}</p>
+                  <Button size="sm" variant="secondary" onClick={fetchAiReport} className="mt-2 text-xs">
+                    Retry Analysis
+                  </Button>
+                </div>
+              )}
+
+              {/* Content when ready */}
+              {aiData && !aiLoading && (
+                <div className="space-y-6">
+                  {/* Verified Database Metrics Grid */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-extrabold uppercase text-ink/60 tracking-wider">
+                      Authoritative Database Metrics (Verified)
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="p-3 bg-paper rounded-[10px] border border-ink/20">
+                        <span className="text-[10px] font-bold text-ink/60 uppercase block">Overall Budget</span>
+                        <p className="font-display font-extrabold text-base text-ink">
+                          Rs {aiData.metrics?.overallBudget?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-paper rounded-[10px] border border-ink/20">
+                        <span className="text-[10px] font-bold text-ink/60 uppercase block">Total Spent</span>
+                        <p className="font-display font-extrabold text-base text-ink">
+                          Rs {aiData.metrics?.totalSpent?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-paper rounded-[10px] border border-ink/20">
+                        <span className="text-[10px] font-bold text-ink/60 uppercase block">Remaining</span>
+                        <p className="font-display font-extrabold text-base text-emerald">
+                          Rs {aiData.metrics?.remaining?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-paper rounded-[10px] border border-ink/20">
+                        <span className="text-[10px] font-bold text-ink/60 uppercase block">Completion %</span>
+                        <p className="font-display font-extrabold text-base text-ink">
+                          {aiData.metrics?.overallCompletionPercent}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Unavailable Notice */}
+                  {aiData.unavailableReason && (
+                    <div className="p-3.5 bg-marigold/20 border-2 border-ink rounded-[10px] text-xs font-semibold text-ink flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-ink flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">AI Analysis Notice:</p>
+                        <p className="text-ink/80 mt-0.5">{aiData.unavailableReason}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Generated Sections */}
+                  {aiData.report && (
+                    <div className="space-y-5 pt-2 border-t-2 border-mist">
+                      {/* Summary */}
+                      <div className="space-y-1.5">
+                        <h4 className="font-display font-bold text-sm text-ink uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle className="w-4 h-4 text-emerald" /> Executive Operations Summary
+                        </h4>
+                        <p className="text-xs md:text-sm text-ink/85 leading-relaxed bg-paper/60 p-3.5 rounded-[10px] border border-ink/15 font-medium">
+                          {aiData.report.summary}
+                        </p>
+                      </div>
+
+                      {/* Observations */}
+                      {aiData.report.observations?.length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="font-display font-bold text-xs text-ink uppercase tracking-wider">
+                            Key Observations
+                          </h4>
+                          <ul className="space-y-1 text-xs text-ink/85">
+                            {aiData.report.observations.map((obs: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2 bg-paper/40 p-2 rounded border border-ink/10">
+                                <span className="text-emerald font-bold">✓</span> {obs}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Potential Issues */}
+                      {aiData.report.issues?.length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="font-display font-bold text-xs text-rose uppercase tracking-wider">
+                            Potential Bottlenecks & Operational Risks
+                          </h4>
+                          <ul className="space-y-1 text-xs text-ink/85">
+                            {aiData.report.issues.map((issue: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2 bg-rose/5 p-2 rounded border border-rose/20">
+                                <span className="text-rose font-bold">⚠</span> {issue}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {aiData.report.recommendations?.length > 0 && (
+                        <div className="space-y-1.5">
+                          <h4 className="font-display font-bold text-xs text-ink uppercase tracking-wider">
+                            Strategic Recommendations
+                          </h4>
+                          <ul className="space-y-1 text-xs text-ink/85">
+                            {aiData.report.recommendations.map((rec: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2 bg-sky/10 p-2 rounded border border-sky/30">
+                                <span className="font-bold text-ink">{idx + 1}.</span> {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Copy Action */}
+                      <div className="flex items-center justify-between pt-3 border-t border-mist">
+                        <span className="text-[11px] text-ink/50">
+                          Model: {aiData.model || "default"}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleCopyAiReport}
+                          className="text-xs flex items-center gap-1.5"
+                        >
+                          {copied ? <Check className="w-3.5 h-3.5 text-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copied ? "Copied to clipboard!" : "Copy Full Report"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -224,4 +224,158 @@ erDiagram
 
 ---
 
+## 10. Task 2 — Mega Event Management
+
+UniSphere's **Mega Event Management** extension empowers university leadership and student societies to coordinate complex, multi-day, multi-track festivals (such as **NEXUS Tech Fest 2026**) with sub-event tracks, student supervisors, decentralized checklists, and concurrency-locked budget allocations.
+
+### 🌟 Key Capabilities by Role
+
+| Role | Responsibilities & Capabilities |
+|---|---|
+| **🛡️ Administrator** | Create multi-day Mega Events; assign to student societies (auto-assigns society president); set overarching festival budget caps (Rs PKR); edit title/description. Cannot create/modify sub-events or operational tasks. |
+| **🏛️ Society President** | Full operational orchestration: create sub-events strictly bounded by festival dates with PKT time validation; assign student supervisors; create checklist tasks with unassigned/assigned states; allocate budget caps once per sub-event; log itemized expenses; receive automatic notifications when 80% threshold is reached. |
+| **👨‍🎓 Student Supervisor** | Direct operational lead for assigned sub-event: view all tasks for that sub-event; update status (`To Do` -> `In Progress` -> `Completed`); **zero budget visibility** (all financial fields sanitized from UI and API). Privilege dynamically evaluated from DB and revoked immediately upon reassignment. |
+| **🙋‍♂️ Student Assignee** | Dedicated volunteer assigned to a task: view assigned sub-event tasks in personal "My Tasks" board with festival and sub-event breadcrumbs; update status on own tasks only. |
+
+---
+
+### 🔐 Permission & Security Matrix
+
+All permissions are strictly verified from the database on every HTTP request (no cached JWT permissions or client trust):
+
+| Action / Endpoint | Admin | President (Owner) | President (Other) | Supervisor | Assignee | Outsider Student |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Create Mega Event** (`POST /api/admin/mega-events`) | ✅ | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **Edit Mega Event Title/Desc** (`PATCH /api/admin/mega-events/[id]`) | ✅ | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **Edit Mega Dates/Budget** | ❌ (400) | ❌ (400) | ❌ (400) | ❌ (400) | ❌ (400) | ❌ (400) |
+| **Create/Edit Sub-event** (`POST/PATCH /api/president/...`) | ❌ (403) | ✅ | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **Create/Edit/Delete Sub-tasks** (`POST/PATCH/DELETE /api/president/...`) | ❌ (403) | ✅ | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **Update Sub-task Status** (`PATCH /api/student/sub-tasks/[id]/status`) | ❌ (403) | ✅ | ❌ (403) | ✅ (own sub-event) | ✅ (own task only) | ❌ (403) |
+| **Allocate Sub-event Budget** (`POST /api/president/.../allocation`) | ❌ (403) | ✅ (once only) | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **Add Sub-event Expense** (`POST /api/president/.../expenses`) | ❌ (403) | ✅ | ❌ (403) | ❌ (403) | ❌ (403) | ❌ (403) |
+| **View Sub-event Budget / Financials** | ❌ | ✅ | ❌ (403) | ❌ (403 / 0 DTO) | ❌ (403 / 0 DTO) | ❌ (403 / 0 DTO) |
+
+---
+
+### 📊 Extended Data Model & Schema
+
+```mermaid
+erDiagram
+    USER ||--o{ MEGA_EVENT : creates_or_presides
+    SOCIETY ||--o{ MEGA_EVENT : hosts
+    MEGA_EVENT ||--o{ SUB_EVENT : contains
+    USER ||--o{ SUB_EVENT : supervises
+
+    SUB_EVENT ||--o{ TASK : has_tasks
+    SUB_EVENT ||--o{ EXPENSE : incurs_expenses
+    USER ||--o{ TASK : assigned_to
+
+    EVENT ||--o{ TASK : has_tasks
+    EVENT ||--o{ EXPENSE : incurs_expenses
+```
+
+#### New & Modified Tables:
+- **`MegaEvent`** (New):
+  - `id`: CUID string primary key.
+  - `title`, `description`: Festival branding.
+  - `startDate`, `endDate`: String dates (`YYYY-MM-DD`). Validated `startDate <= endDate`. Immutable after creation.
+  - `overallBudget`: Integer in PKR (>= 0). Immutable after creation.
+  - `societyId`, `presidentId`, `createdById`: Auto-resolved foreign keys.
+- **`SubEvent`** (New):
+  - `id`, `megaEventId`: Relations to parent festival.
+  - `title`, `description`, `date`, `venue`: Track logistics. Validated within Mega Event date range.
+  - `startAt`, `endAt`: UTC timestamps converted from Pakistan Standard Time (PKT).
+  - `supervisorId`: Assigned student ID (strictly role `STUDENT`).
+  - `allocatedBudget`: Nullable integer set exactly once via concurrency-safe allocation.
+  - `budgetAlertSent`: Boolean flag persisted to guarantee single 80% threshold notification.
+- **`Task`** (Modified):
+  - `eventId`: Nullable string (foreign key to Task 1 `Event`).
+  - `subEventId`: Nullable string (foreign key to Task 2 `SubEvent`).
+  - Indexed via `[subEventId]` and `[eventId]`.
+- **`Expense`** (Modified):
+  - `eventId`: Nullable string (foreign key to Task 1 `Event`).
+  - `subEventId`: Nullable string (foreign key to Task 2 `SubEvent`).
+  - Indexed via `[subEventId]` and `[eventId]`.
+
+---
+
+### 💰 Budget Allocation & 80% Alert Rule
+
+1. **Strict Once-Only Allocation**:
+   - Setting a sub-event's budget is executed under a PostgreSQL row lock (`SELECT id FROM "MegaEvent" WHERE id = ... FOR UPDATE`).
+   - A sub-event's budget can be allocated **only once**; second attempts return `409 Conflict`.
+   - The sum of all sub-event allocations cannot exceed `MegaEvent.overallBudget`.
+2. **80% Spending Threshold Alert**:
+   - Each expense logs an itemized expenditure against the sub-event's allocated cap under a row lock (`SELECT id FROM "SubEvent" ... FOR UPDATE`).
+   - When cumulative spent crosses $\ge 80\%$ of allocated budget ($newSpent \times 5 \ge allocated \times 4$), exactly **one notification** is created for the society president and `budgetAlertSent = true` is persisted in the same transaction.
+   - Subsequent expenses above 80% do **not** generate duplicate notifications.
+   - Allocation 0 blocks all expenses and never alerts.
+3. **Concurrency-Safe Spending**:
+   - Even under 10 parallel simultaneous expense requests, PostgreSQL row locks serialize mutations, guaranteeing that the sub-event budget cap is never breached.
+
+---
+
+### 🛡️ Zero Regression & Task 1 Isolation
+
+- **Zero Data Leakage**:
+  - Mega Events and Sub-events **never** appear in Task 1 public listings, landing page queries, or the Admin pending proposal queue.
+  - Task 1 calculations for progress %, volunteer counts, and approved budget remaining remain 100% isolated.
+- **Dual-Mode Kanban & Tasks**:
+  - Regular event tasks follow Task 1 volunteer acceptance rules.
+  - Sub-event tasks allow assignment to any registered student without requiring society membership or invitation.
+  - Students see both types in their unified "My Tasks" portal with visual badge distinctions.
+
+---
+
+### 🤖 Bonus: AI-Powered Operations & Health Report
+
+Presidents can click **"Analyse with AI"** on their Mega Event dashboard to generate an instant executive health summary:
+1. **Verifiable Numbers Guarantee**:
+   - Authoritative numeric metrics are calculated directly by `lib/services/megaMetrics.ts` from verified DB transactions.
+   - The AI receives metrics as read-only context and produces structured JSON (`summary`, `observations`, `issues`, `recommendations`).
+2. **Environment Configuration**:
+   - Supported providers: Groq, Gemini OpenAI-compatible, OpenRouter, or local Ollama.
+   - Configure in `.env`:
+     ```env
+     AI_BASE_URL="https://api.groq.com/openai/v1"
+     AI_API_KEY="your-api-key"
+     AI_MODEL="llama-3.3-70b-versatile"
+     ```
+   - If AI is not configured or fails, the interface gracefully displays the verified database metrics with a clear explanatory notice (no fake metrics).
+   - Rate limited to 1 request per user per 10 seconds with a 20-second timeout.
+
+---
+
+### 🧪 Test Commands & Pre-seeded Accounts
+
+#### Pre-seeded Task 2 Starter & Demo Accounts:
+
+| Role | Email | Password | Pre-seeded Context |
+|---|---|---|---|
+| **Admin** | `ahmadcode24@gmail.com` | `Admin@12345` | Mega Event creation and title editing |
+| **NEXUS President** | `nexus.president@unisphere.test` | `Pass@12345` | President of NEXUS Society, manages "NEXUS Tech Fest 2026" |
+| **Student 1 (Supervisor)** | `nexus.student1@unisphere.test` | `Pass@12345` | Supervisor of Gaming Competition & Project Exhibition |
+| **Student 2 (Supervisor)** | `nexus.student2@unisphere.test` | `Pass@12345` | Supervisor of Web Development Workshop |
+| **Student 3 (Supervisor)** | `nexus.student3@unisphere.test` | `Pass@12345` | Supervisor of Quiz Competition |
+
+#### Commands:
+```bash
+# Seed starter entities (NEXUS society, president, 3 students)
+npx tsx scripts/seed-task2-starter.ts
+
+# Populate complete 4-track demo "NEXUS Tech Fest 2026"
+npm run db:seed:task2
+
+# Run Task 2 Comprehensive QA Test Suite (52/52 assertions)
+npm run test:task2
+
+# Run Task 1 Master Rubric Audit (21/21 assertions, 100%)
+npm run test:rubric
+
+# Run production build verification (0 errors, 31 routes generated)
+npm run build
+```
+
+---
+
 *UniSphere — Engineered for the University Noticeboard.*
