@@ -1,6 +1,14 @@
 import { prisma } from "../db";
 import { AppError } from "../errors";
 
+export function isEventExpense(expense: { eventId?: string | null; subEventId?: string | null }): boolean {
+  return !!expense.eventId && !expense.subEventId;
+}
+
+export function isSubEventExpense(expense: { eventId?: string | null; subEventId?: string | null }): boolean {
+  return !expense.eventId && !!expense.subEventId;
+}
+
 export async function getEventExpenses(eventId: string) {
   const event = await prisma.event.findUnique({
     where: { id: eventId },

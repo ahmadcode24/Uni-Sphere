@@ -9,19 +9,22 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  passwordHash  String
-  role          String         // STUDENT | PRESIDENT | ADMIN
-  createdAt     DateTime       @default(now())
-  society       Society?       @relation("President")
-  memberships   Membership[]
-  registrations Registration[]
-  invitations   Invitation[]
-  tasks         Task[]         @relation("Assignee")
-  notifications Notification[]
-  otps          OtpCode[]
+  id                  String         @id @default(cuid())
+  name                String
+  email               String         @unique
+  passwordHash        String
+  role                String         // STUDENT | PRESIDENT | ADMIN
+  createdAt           DateTime       @default(now())
+  society             Society?       @relation("President")
+  memberships         Membership[]
+  registrations       Registration[]
+  invitations         Invitation[]
+  tasks               Task[]         @relation("Assignee")
+  notifications       Notification[]
+  otps                OtpCode[]
+  megaEventsPresident MegaEvent[]    @relation("MegaPresident")
+  megaEventsCreated   MegaEvent[]    @relation("MegaCreator")
+  supervisedSubEvents SubEvent[]     @relation("Supervisor")
 }
 
 model OtpCode {
@@ -52,6 +55,7 @@ model Society {
   memberships  Membership[]
   events       Event[]
   meetings     Meeting[]
+  megaEvents   MegaEvent[]
 }
 
 model Membership {
@@ -124,29 +128,84 @@ model Invitation {
 }
 
 model Task {
-  id          String   @id @default(cuid())
-  eventId     String
+  id          String    @id @default(cuid())
+  eventId     String?
+  subEventId  String?
   title       String
   description String
-  priority    String   @default("MEDIUM") // LOW|MEDIUM|HIGH
+  priority    String    @default("MEDIUM") // LOW|MEDIUM|HIGH
   dueDate     DateTime
-  status      String   @default("TODO") // TODO|IN_PROGRESS|COMPLETED
+  status      String    @default("TODO") // TODO|IN_PROGRESS|COMPLETED
   assigneeId  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  event       Event    @relation(fields: [eventId], references: [id])
-  assignee    User?    @relation("Assignee", fields: [assigneeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  event       Event?    @relation(fields: [eventId], references: [id])
+  subEvent    SubEvent? @relation(fields: [subEventId], references: [id])
+  assignee    User?     @relation("Assignee", fields: [assigneeId], references: [id])
+
+  @@index([eventId])
+  @@index([subEventId])
+  @@index([assigneeId])
 }
 
 model Expense {
-  id        String   @id @default(cuid())
-  eventId   String
-  title     String
-  amount    Int
-  note      String?
-  spentOn   DateTime
-  createdAt DateTime @default(now())
-  event     Event    @relation(fields: [eventId], references: [id])
+  id         String    @id @default(cuid())
+  eventId    String?
+  subEventId String?
+  title      String
+  amount     Int
+  note       String?
+  spentOn    DateTime
+  createdAt  DateTime  @default(now())
+  event      Event?    @relation(fields: [eventId], references: [id])
+  subEvent   SubEvent? @relation(fields: [subEventId], references: [id])
+
+  @@index([eventId])
+  @@index([subEventId])
+}
+
+model MegaEvent {
+  id            String     @id @default(cuid())
+  title         String
+  description   String
+  societyId     String
+  presidentId   String     // = society.presidentId, set server-side
+  createdById   String     // admin
+  startDate     String     // "YYYY-MM-DD" (PKT calendar date)
+  endDate       String     // "YYYY-MM-DD"
+  overallBudget Int
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  society       Society    @relation(fields: [societyId], references: [id])
+  president     User       @relation("MegaPresident", fields: [presidentId], references: [id])
+  createdBy     User       @relation("MegaCreator", fields: [createdById], references: [id])
+  subEvents     SubEvent[]
+
+  @@index([createdById])
+  @@index([presidentId])
+}
+
+model SubEvent {
+  id              String    @id @default(cuid())
+  megaEventId     String
+  title           String
+  description     String
+  date            String    // "YYYY-MM-DD"
+  startAt         DateTime  // UTC
+  endAt           DateTime  // UTC
+  venue           String
+  supervisorId    String
+  allocatedBudget Int?      // null = not allocated yet; set once
+  budgetAlertSent Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  megaEvent       MegaEvent @relation(fields: [megaEventId], references: [id])
+  supervisor      User      @relation("Supervisor", fields: [supervisorId], references: [id])
+  tasks           Task[]
+  expenses        Expense[]
+
+  @@index([megaEventId])
+  @@index([supervisorId])
 }
 
 model Notification {

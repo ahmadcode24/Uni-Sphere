@@ -3,6 +3,14 @@ import { AppError } from "../errors";
 import { notify } from "../notify";
 import { publish } from "../realtime";
 
+export function isEventTask(task: { eventId?: string | null; subEventId?: string | null }): boolean {
+  return !!task.eventId && !task.subEventId;
+}
+
+export function isSubEventTask(task: { eventId?: string | null; subEventId?: string | null }): boolean {
+  return !task.eventId && !!task.subEventId;
+}
+
 export async function getEventTasks(eventId: string) {
   const tasks = await prisma.task.findMany({
     where: { eventId },
@@ -111,7 +119,7 @@ export async function updateTask(
     include: { event: { include: { society: true } } },
   });
 
-  if (!task) throw new AppError("TASK_NOT_FOUND", "Task not found", 404);
+  if (!task || !task.event) throw new AppError("TASK_NOT_FOUND", "Event task not found", 404);
 
   const isPresident =
     userRole === "PRESIDENT" && task.event.society.presidentId === userId;
@@ -202,7 +210,7 @@ export async function deleteTask(presidentId: string, taskId: string) {
     include: { event: { include: { society: true } } },
   });
 
-  if (!task) throw new AppError("NOT_FOUND", "Task not found", 404);
+  if (!task || !task.event) throw new AppError("NOT_FOUND", "Event task not found", 404);
   if (task.event.society.presidentId !== presidentId) {
     throw new AppError("FORBIDDEN", "Unauthorized to delete task.", 403);
   }
@@ -219,6 +227,11 @@ export async function getStudentTasks(studentId: string) {
       event: {
         include: {
           society: { select: { id: true, name: true, category: true } },
+        },
+      },
+      subEvent: {
+        include: {
+          megaEvent: { select: { id: true, title: true } },
         },
       },
     },

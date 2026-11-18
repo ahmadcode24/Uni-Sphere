@@ -16,6 +16,8 @@ async function main() {
   await prisma.registration.deleteMany();
   await prisma.meetingInvite.deleteMany();
   await prisma.meeting.deleteMany();
+  await prisma.subEvent.deleteMany();
+  await prisma.megaEvent.deleteMany();
   await prisma.event.deleteMany();
   await prisma.membership.deleteMany();
   await prisma.society.deleteMany();
@@ -97,6 +99,40 @@ async function main() {
       contactEmail: "drama@unisphere.test",
       contactPhone: "+92 301 7654321",
       presidentId: pres2.id,
+    },
+  });
+
+  // NEXUS Society & Users for Task 2
+  const presNexus = await prisma.user.create({
+    data: {
+      name: "NEXUS President",
+      email: "nexus.president@unisphere.test",
+      passwordHash: commonPass,
+      role: "PRESIDENT",
+    },
+  });
+
+  const nexusStudents = [];
+  for (let i = 1; i <= 3; i++) {
+    const student = await prisma.user.create({
+      data: {
+        name: `NEXUS Student ${i}`,
+        email: `nexus.student${i}@unisphere.test`,
+        passwordHash: commonPass,
+        role: "STUDENT",
+      },
+    });
+    nexusStudents.push(student);
+  }
+
+  const societyNexus = await prisma.society.create({
+    data: {
+      name: "NEXUS Society",
+      description: "Premier university computing and technical fest society.",
+      category: "Technology",
+      contactEmail: "nexus@unisphere.test",
+      contactPhone: "+92 300 9876543",
+      presidentId: presNexus.id,
     },
   });
 
