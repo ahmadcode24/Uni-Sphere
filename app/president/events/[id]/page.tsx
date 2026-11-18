@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge, BadgeVariant } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
+import { useLive } from "@/lib/use-live";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
@@ -99,29 +100,19 @@ export default function PresidentEventDetailPage({ params }: { params: { id: str
     }
   };
 
+  const { data: liveRegs } = useLive<{ registrations: any[] }>(
+    params.id ? `/api/events/${params.id}/registrations` : null,
+    3000
+  );
+
+  useEffect(() => {
+    if (liveRegs?.registrations) {
+      setRegistrations(liveRegs.registrations);
+    }
+  }, [liveRegs]);
+
   useEffect(() => {
     loadData();
-
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource(`/api/stream?event=${params.id}`);
-      es.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.kind === "seats" || data.kind === "task") {
-            loadData();
-          }
-        } catch {
-          // ignore
-        }
-      };
-    } catch {
-      // ignore
-    }
-
-    return () => {
-      if (es) es.close();
-    };
   }, [params.id]);
 
   const handleSubmitProposal = async () => {

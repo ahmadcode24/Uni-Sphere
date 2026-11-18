@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtPKT } from "@/lib/time";
+import { useLive } from "@/lib/use-live";
 
 export default function PublicEventDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -57,8 +58,25 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
     }
   };
 
+  const { data: liveData } = useLive<{
+    event: any;
+    caps: any;
+    myRegistration: any;
+    isOwner: boolean;
+  }>(params.id ? `/api/events/${params.id}` : null, 3000);
+
   useEffect(() => {
-    async function init() {
+    if (liveData?.event) {
+      setEventData(liveData.event);
+      setCaps(liveData.caps);
+      setMyRegistration(liveData.myRegistration);
+      setSeatsRemaining(liveData.event.seatsRemaining);
+      setLoading(false);
+    }
+  }, [liveData]);
+
+  useEffect(() => {
+    async function checkAuth() {
       try {
         const uRes = await fetch("/api/auth/me");
         if (uRes.ok) {
@@ -72,29 +90,11 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
       await loadEvent();
       setLoading(false);
 
-      // Auto-focus register button if returned from auth flow
       if (registerBtnRef.current) {
         registerBtnRef.current.focus();
       }
     }
-    init();
-
-    // Setup live SSE stream for real-time seat updates
-    const eventSource = new EventSource(`/api/stream?event=${params.id}`);
-    eventSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.kind === "seats" && data.eventId === params.id) {
-          setSeatsRemaining(data.seatsRemaining);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    return () => {
-      eventSource.close();
-    };
+    checkAuth();
   }, [params.id]);
 
   const handleRegister = async () => {

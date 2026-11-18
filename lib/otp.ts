@@ -53,17 +53,18 @@ export async function generateAndSendOtp(userId: string, email: string) {
     },
   });
 
-  // Console output
-  console.log("\n========================================");
-  console.log(`[OTP] ${email} -> ${code}`);
-  console.log("========================================\n");
+  // Optional SMTP delivery or fallback to console.log when SMTP vars are missing
+  const hasSmtp = Boolean(
+    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+  );
 
-  // Optional SMTP delivery if configured
-  if (process.env.SMTP_HOST) {
+  if (hasSmtp) {
     try {
+      const port = parseInt(process.env.SMTP_PORT || "587");
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
+        port,
+        secure: port === 465,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
@@ -71,14 +72,31 @@ export async function generateAndSendOtp(userId: string, email: string) {
       });
 
       await transporter.sendMail({
-        from: process.env.MAIL_FROM || "no-reply@unisphere.test",
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
         to: email,
-        subject: `Your UniSphere verification code: ${code}`,
-        text: `Your UniSphere 6-digit verification code is: ${code}. It expires in 10 minutes.`,
+        subject: `Your UniSphere Verification Code: ${code}`,
+        text: `Your UniSphere 6-digit verification code is: ${code}\n\nThis code will expire in 10 minutes.\nIf you did not request this code, please ignore this email.`,
+        html: `<div style="font-family: sans-serif; padding: 20px; color: #16202B;">
+          <h2 style="color: #0B7A55;">UniSphere Verification Code</h2>
+          <p>Please enter the following 6-digit code to complete your login:</p>
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; padding: 12px 24px; background: #EEF2EC; display: inline-block; border: 2px solid #16202B; border-radius: 8px;">
+            ${code}
+          </div>
+          <p style="margin-top: 16px; color: #666; font-size: 13px;">This code expires in 10 minutes. If you did not request it, you can safely ignore this email.</p>
+        </div>`,
       });
     } catch (err) {
-      console.error("[OTP Email Error]:", err);
+      console.error("[OTP SMTP Send Error]:", err);
+      // Fallback to console in case SMTP credentials fail
+      console.log("\n========================================");
+      console.log(`[OTP FALLBACK] ${email} -> ${code}`);
+      console.log("========================================\n");
     }
+  } else {
+    // Fall back to console.log only when SMTP vars are missing
+    console.log("\n========================================");
+    console.log(`[OTP] ${email} -> ${code}`);
+    console.log("========================================\n");
   }
 
   return { success: true };

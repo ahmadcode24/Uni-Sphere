@@ -30,8 +30,9 @@ export default function PresidentSocietyPage() {
     logoUrl: "",
   });
   const [logoError, setLogoError] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogoError("");
     const file = e.target.files?.[0];
     if (!file) return;
@@ -47,11 +48,22 @@ export default function PresidentSocietyPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setFormData((prev) => ({ ...prev, logoUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    setUploadingLogo(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      setFormData((prev) => ({ ...prev, logoUrl: json.url }));
+    } catch (err: any) {
+      setLogoError(err.message || "Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   useEffect(() => {
@@ -234,6 +246,7 @@ export default function PresidentSocietyPage() {
                     onChange={handleLogoUpload}
                     className="block w-full text-sm text-ink file:mr-4 file:py-2 file:px-4 file:rounded file:border-2 file:border-ink file:text-xs file:font-bold file:bg-surface file:text-ink hover:file:bg-paper cursor-pointer"
                   />
+                  {uploadingLogo && <p className="text-xs text-sky mt-1 font-semibold">Uploading logo...</p>}
                   {logoError && <p className="text-xs text-rose mt-1">{logoError}</p>}
                 </div>
               </div>

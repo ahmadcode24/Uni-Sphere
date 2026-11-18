@@ -294,78 +294,83 @@ export async function updateEvent(
     proposedBudget?: number;
   }
 ) {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: {
-      society: true,
-      _count: {
-        select: { registrations: { where: { status: "REGISTERED" } } },
+  return prisma.$transaction(async (tx) => {
+    // Row lock on event to serialize concurrent updates
+    await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
+
+    const event = await tx.event.findUnique({
+      where: { id: eventId },
+      include: {
+        society: true,
+        _count: {
+          select: { registrations: { where: { status: "REGISTERED" } } },
+        },
       },
-    },
-  });
-
-  if (!event) throw new AppError("EVENT_NOT_FOUND", "Event not found", 404);
-  if (event.society.presidentId !== presidentId) {
-    throw new AppError("FORBIDDEN", "Unauthorized to edit this event.", 403);
-  }
-
-  const caps = eventCaps(event);
-  if (!caps.canEdit) {
-    throw new AppError("LOCKED", "This event cannot be edited in its current state.", 400);
-  }
-
-  const startAt = data.startAt || event.startAt;
-  const endAt = data.endAt || event.endAt;
-  const deadline = data.registrationDeadline || event.registrationDeadline;
-
-  if (startAt >= endAt) {
-    throw new AppError("INVALID_DATES", "Start time must be before end time.", 400);
-  }
-  if (deadline > startAt) {
-    throw new AppError("INVALID_DEADLINE", "Registration deadline cannot be after start time.", 400);
-  }
-
-  // Capacity edit rule: capacity cannot go below active registered count
-  const activeCount = event._count.registrations;
-  if (data.capacity !== undefined) {
-    if (data.capacity < 1) throw new AppError("INVALID_CAPACITY", "Capacity must be >= 1", 400);
-    if (data.capacity < activeCount) {
-      throw new AppError(
-        "CAPACITY_TOO_LOW",
-        `Capacity cannot be reduced below the ${activeCount} registered attendees.`,
-        400
-      );
-    }
-  }
-
-  const updateData: any = {};
-  if (data.title) updateData.title = data.title.trim();
-  if (data.description) updateData.description = data.description.trim();
-  if (data.venue) updateData.venue = data.venue.trim();
-  if (data.startAt) updateData.startAt = data.startAt;
-  if (data.endAt) updateData.endAt = data.endAt;
-  if (data.registrationDeadline) updateData.registrationDeadline = data.registrationDeadline;
-  if (data.capacity !== undefined) updateData.capacity = data.capacity;
-  if (data.proposedBudget !== undefined) updateData.proposedBudget = data.proposedBudget;
-
-  // Editing an Approved+Upcoming event -> status becomes PENDING, hasBeenApproved stays true, approvedBudget stays
-  if (event.approvalStatus === "APPROVED") {
-    updateData.approvalStatus = "PENDING";
-    updateData.adminRemarks = null;
-    updateData.submittedAt = new Date();
-
-    // Notify admins
-    const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
-    await notify(admins.map((a) => a.id), {
-      type: "EVENT_RESUBMITTED",
-      message: `Event modified & resubmitted: '${event.title}'.`,
-      link: `/admin/review/${event.id}`,
     });
-  }
 
-  return prisma.event.update({
-    where: { id: eventId },
-    data: updateData,
+    if (!event) throw new AppError("EVENT_NOT_FOUND", "Event not found", 404);
+    if (event.society.presidentId !== presidentId) {
+      throw new AppError("FORBIDDEN", "Unauthorized to edit this event.", 403);
+    }
+
+    const caps = eventCaps(event);
+    if (!caps.canEdit) {
+      throw new AppError("LOCKED", "This event cannot be edited in its current state.", 400);
+    }
+
+    const startAt = data.startAt || event.startAt;
+    const endAt = data.endAt || event.endAt;
+    const deadline = data.registrationDeadline || event.registrationDeadline;
+
+    if (startAt >= endAt) {
+      throw new AppError("INVALID_DATES", "Start time must be before end time.", 400);
+    }
+    if (deadline > startAt) {
+      throw new AppError("INVALID_DEADLINE", "Registration deadline cannot be after start time.", 400);
+    }
+
+    // Capacity edit rule: capacity cannot go below active registered count
+    const activeCount = event._count.registrations;
+    if (data.capacity !== undefined) {
+      if (data.capacity < 1) throw new AppError("INVALID_CAPACITY", "Capacity must be >= 1", 400);
+      if (data.capacity < activeCount) {
+        throw new AppError(
+          "CAPACITY_TOO_LOW",
+          `Capacity cannot be reduced below the ${activeCount} registered attendees.`,
+          400
+        );
+      }
+    }
+
+    const updateData: any = {};
+    if (data.title) updateData.title = data.title.trim();
+    if (data.description) updateData.description = data.description.trim();
+    if (data.venue) updateData.venue = data.venue.trim();
+    if (data.startAt) updateData.startAt = data.startAt;
+    if (data.endAt) updateData.endAt = data.endAt;
+    if (data.registrationDeadline) updateData.registrationDeadline = data.registrationDeadline;
+    if (data.capacity !== undefined) updateData.capacity = data.capacity;
+    if (data.proposedBudget !== undefined) updateData.proposedBudget = data.proposedBudget;
+
+    // Editing an Approved+Upcoming event -> status becomes PENDING, hasBeenApproved stays true, approvedBudget stays
+    if (event.approvalStatus === "APPROVED") {
+      updateData.approvalStatus = "PENDING";
+      updateData.adminRemarks = null;
+      updateData.submittedAt = new Date();
+
+      // Notify admins
+      const admins = await tx.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+      await notify(admins.map((a) => a.id), {
+        type: "EVENT_RESUBMITTED",
+        message: `Event modified & resubmitted: '${event.title}'.`,
+        link: `/admin/review/${event.id}`,
+      });
+    }
+
+    return tx.event.update({
+      where: { id: eventId },
+      data: updateData,
+    });
   });
 }
 

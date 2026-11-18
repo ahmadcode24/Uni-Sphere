@@ -51,6 +51,8 @@ export async function addExpense(
   }
 
   return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
+
     const event = await tx.event.findUnique({
       where: { id: eventId },
       include: { society: true },
@@ -123,6 +125,8 @@ export async function updateExpense(
       throw new AppError("FORBIDDEN", "Unauthorized to update this expense.", 403);
     }
 
+    await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${expense.eventId} FOR UPDATE`;
+
     if (expense.event.approvalStatus !== "APPROVED" || expense.event.isCancelled) {
       throw new AppError(
         "EVENT_NOT_APPROVED",
@@ -167,17 +171,21 @@ export async function updateExpense(
 }
 
 export async function deleteExpense(presidentId: string, expenseId: string) {
-  const expense = await prisma.expense.findUnique({
-    where: { id: expenseId },
-    include: { event: { include: { society: true } } },
+  return prisma.$transaction(async (tx) => {
+    const expense = await tx.expense.findUnique({
+      where: { id: expenseId },
+      include: { event: { include: { society: true } } },
+    });
+
+    if (!expense) throw new AppError("NOT_FOUND", "Expense not found", 404);
+    if (expense.event.society.presidentId !== presidentId) {
+      throw new AppError("FORBIDDEN", "Unauthorized to delete this expense.", 403);
+    }
+
+    await tx.$queryRaw`SELECT id FROM "Event" WHERE id = ${expense.eventId} FOR UPDATE`;
+
+    await tx.expense.delete({ where: { id: expenseId } });
+    return { success: true };
   });
-
-  if (!expense) throw new AppError("NOT_FOUND", "Expense not found", 404);
-  if (expense.event.society.presidentId !== presidentId) {
-    throw new AppError("FORBIDDEN", "Unauthorized to delete this expense.", 403);
-  }
-
-  await prisma.expense.delete({ where: { id: expenseId } });
-  return { success: true };
 }
 

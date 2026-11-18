@@ -17,6 +17,7 @@ import {
   Home,
   Check,
 } from "lucide-react";
+import { useLive } from "@/lib/use-live";
 
 export interface NavItem {
   label: string;
@@ -80,47 +81,15 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
 
   const navItems = navItemsByRole[role] || [];
 
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch("/api/notifications");
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        const unread = (data.notifications || []).filter((n: NotificationItem) => !n.readAt).length;
-        setUnreadCount(unread);
-      }
-    } catch {
-      // ignore
-    }
-  };
+  const { data: liveNotifs } = useLive<{ notifications: NotificationItem[] }>("/api/notifications", 3000);
 
   useEffect(() => {
-    fetchNotifications();
-
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource("/api/stream");
-      es.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.kind === "notification" || data.type === "notification") {
-            fetchNotifications();
-          }
-        } catch {
-          // ignore parse errors
-        }
-      };
-    } catch {
-      // ignore EventSource errors
+    if (liveNotifs?.notifications) {
+      setNotifications(liveNotifs.notifications);
+      const unread = liveNotifs.notifications.filter((n) => !n.readAt).length;
+      setUnreadCount(unread);
     }
-
-    const interval = setInterval(fetchNotifications, 12000);
-    return () => {
-      clearInterval(interval);
-      if (es) es.close();
-    };
-  }, []);
+  }, [liveNotifs]);
 
   // Close bell on outside click
   useEffect(() => {

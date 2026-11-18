@@ -23,6 +23,7 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { useLive } from "@/lib/use-live";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtPKTShort } from "@/lib/time";
 
@@ -84,29 +85,19 @@ export default function EventTasksPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const { data: liveTasks } = useLive<{ tasks: any[] }>(
+    params.id ? `/api/events/${params.id}/tasks` : null,
+    3000
+  );
+
+  useEffect(() => {
+    if (liveTasks?.tasks) {
+      setTasks(liveTasks.tasks);
+    }
+  }, [liveTasks]);
+
   useEffect(() => {
     loadData();
-
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource(`/api/stream?event=${params.id}`);
-      es.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.kind === "task") {
-            loadData();
-          }
-        } catch {
-          // ignore
-        }
-      };
-    } catch {
-      // ignore
-    }
-
-    return () => {
-      if (es) es.close();
-    };
   }, [params.id]);
 
   const handleCreateTask = async (e: React.FormEvent) => {

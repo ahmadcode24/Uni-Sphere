@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fmtPKTShort } from "@/lib/time";
+import { useLive } from "@/lib/use-live";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -27,25 +28,24 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const { data: liveStats } = useLive("/api/admin/stats", 3000);
+
+  useEffect(() => {
+    if (liveStats) {
+      setStats(liveStats);
+    }
+  }, [liveStats]);
+
   useEffect(() => {
     async function load() {
       try {
-        const [uRes, sRes] = await Promise.all([
-          fetch("/api/auth/me"),
-          fetch("/api/admin/stats"),
-        ]);
-
+        const uRes = await fetch("/api/auth/me");
         if (!uRes.ok) {
           router.push("/login");
           return;
         }
         const uData = await uRes.json();
         setUser(uData.user);
-
-        if (sRes.ok) {
-          const sData = await sRes.json();
-          setStats(sData);
-        }
       } catch {
         // ignore
       } finally {
@@ -53,23 +53,6 @@ export default function AdminDashboardPage() {
       }
     }
     load();
-
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource("/api/stream");
-      es.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.kind === "admin" || data.kind === "notification") {
-            fetch("/api/admin/stats").then((r) => r.json()).then(setStats).catch(() => {});
-          }
-        } catch {}
-      };
-    } catch {}
-
-    return () => {
-      if (es) es.close();
-    };
   }, [router]);
 
   if (loading) {

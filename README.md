@@ -48,11 +48,12 @@
 | Layer | Technology |
 |---|---|
 | **Framework** | Next.js 14 App Router (TypeScript Strict Mode) |
-| **Database & ORM** | SQLite (`dev.db` in WAL mode) with Prisma ORM 5.22 |
+| **Database & ORM** | Neon Postgres (Serverless PostgreSQL) with Prisma ORM 5.22 |
 | **Styling & Design System** | Tailwind CSS — Custom "Campus Noticeboard" Palette (Paper, Ink, Surface, Emerald, Marigold, Rose, Sky) |
 | **Typography** | Bricolage Grotesque (Headings) & Figtree (Body) |
-| **Authentication** | Custom Two-Factor Auth (Argon2/Bcrypt + 6-digit terminal OTP) with Jose JWT HTTP-only cookies |
-| **Real-time** | Server-Sent Events (SSE) with Node.js event emitter bus |
+| **Authentication** | Custom Two-Factor Auth (Bcrypt + 6-digit terminal OTP / SMTP) with Jose JWT HTTP-only cookies |
+| **Real-time** | Live polling via `useLive` hook with visibility detection |
+| **Storage** | Vercel Blob (with local `/public/uploads` fallback) |
 | **PDF Generation** | PDFKit |
 | **Date & Time** | Luxon (PKT `Asia/Karachi` time zone conversions) |
 
@@ -79,7 +80,36 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 4. Login & Two-Factor OTP
+## 4. Vercel Deployment Guide
+
+Deploying UniSphere to Vercel requires zero code changes:
+
+1. **Push Changes to GitHub**:
+   ```bash
+   git push origin main
+   ```
+
+2. **Import Project into Vercel**:
+   - Go to your [Vercel Dashboard](https://vercel.com/dashboard) and click **"Add New Project"**.
+   - Select the `Uni-Sphere` repository.
+   - Framework preset: **Next.js** (auto-detected).
+   - Build Command: `prisma generate && next build` (defined in `package.json`).
+
+3. **Configure Environment Variables in Vercel**:
+   Under **Project Settings -> Environment Variables**, add:
+   - `DATABASE_URL`: `postgresql://neondb_owner:npg_JXUlzqP1by7W@ep-quiet-dream-a191fqx2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require&connection_limit=25`
+   - `DIRECT_URL`: `postgresql://neondb_owner:npg_JXUlzqP1by7W@ep-quiet-dream-a191fqx2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
+   - `AUTH_SECRET`: A secure random 32+ character JWT secret string.
+   - *(Optional)* `BLOB_READ_WRITE_TOKEN`: Create a Vercel Blob store under **Storage -> Blob** and connect it to your project.
+   - *(Optional)* `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`: For automated email OTP verification codes.
+
+4. **Deploy**:
+   - Click **Deploy**. Vercel will install dependencies, generate the Prisma client (`postinstall`), and build the optimized production output.
+   - The remote Neon Postgres database is already initialized and seeded with test accounts.
+
+---
+
+## 5. Login & Two-Factor OTP
 
 All roles authenticate via email and password, followed by a **6-digit verification code**.
 - In local development mode, OTP codes are logged directly to the server terminal:
