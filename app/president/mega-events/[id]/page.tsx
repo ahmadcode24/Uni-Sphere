@@ -70,6 +70,22 @@ export default function PresidentMegaEventDetailPage({
   const [taskFormError, setTaskFormError] = useState("");
   const [taskSaving, setTaskSaving] = useState(false);
 
+  // Allocation & Expense states (Phase E)
+  const [allocAmounts, setAllocAmounts] = useState<Record<string, number>>({});
+  const [allocError, setAllocError] = useState("");
+  const [allocLoading, setAllocLoading] = useState<string | null>(null);
+
+  const [expModalOpen, setExpModalOpen] = useState(false);
+  const [expSubEvent, setExpSubEvent] = useState<any>(null);
+  const [expForm, setExpForm] = useState({
+    title: "",
+    amount: 1000,
+    note: "",
+    spentOn: new Date().toISOString().split("T")[0],
+  });
+  const [expError, setExpError] = useState("");
+  const [expSaving, setExpSaving] = useState(false);
+
   // Filter in checklist
   const [checklistFilter, setChecklistFilter] = useState<string>("ALL");
 
@@ -264,6 +280,68 @@ export default function PresidentMegaEventDetailPage({
     }
   };
 
+  const handleAllocate = async (subId: string) => {
+    setAllocError("");
+    setAllocLoading(subId);
+    const amount = Number(allocAmounts[subId] || 0);
+
+    try {
+      const res = await fetch(`/api/president/sub-events/${subId}/allocation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to allocate budget");
+      if (refresh) refresh();
+    } catch (err: any) {
+      setAllocError(err.message || "Failed to allocate budget");
+    } finally {
+      setAllocLoading(null);
+    }
+  };
+
+  const openAddExpenseModal = (sub: any) => {
+    setExpSubEvent(sub);
+    setExpForm({
+      title: "",
+      amount: 1000,
+      note: "",
+      spentOn: sub.date || new Date().toISOString().split("T")[0],
+    });
+    setExpError("");
+    setExpModalOpen(true);
+  };
+
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expSubEvent) return;
+    setExpError("");
+    setExpSaving(true);
+
+    try {
+      const res = await fetch(`/api/president/sub-events/${expSubEvent.id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: expForm.title,
+          amount: Number(expForm.amount),
+          note: expForm.note,
+          spentOn: expForm.spentOn,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add expense");
+
+      setExpModalOpen(false);
+      if (refresh) refresh();
+    } catch (err: any) {
+      setExpError(err.message || "Failed to add expense");
+    } finally {
+      setExpSaving(false);
+    }
+  };
+
   const handleTaskDelete = async (taskId: string) => {
     if (!confirm("Are you sure you want to delete this checklist task?")) return;
     try {
@@ -271,6 +349,68 @@ export default function PresidentMegaEventDetailPage({
       if (refresh) refresh();
     } catch {
       // ignore
+    }
+  };
+
+  const handleAllocate = async (subId: string) => {
+    setAllocError("");
+    setAllocLoading(subId);
+    const amount = Number(allocAmounts[subId] || 0);
+
+    try {
+      const res = await fetch(`/api/president/sub-events/${subId}/allocation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to allocate budget");
+      if (refresh) refresh();
+    } catch (err: any) {
+      setAllocError(err.message || "Failed to allocate budget");
+    } finally {
+      setAllocLoading(null);
+    }
+  };
+
+  const openAddExpenseModal = (sub: any) => {
+    setExpSubEvent(sub);
+    setExpForm({
+      title: "",
+      amount: 1000,
+      note: "",
+      spentOn: sub.date || new Date().toISOString().split("T")[0],
+    });
+    setExpError("");
+    setExpModalOpen(true);
+  };
+
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expSubEvent) return;
+    setExpError("");
+    setExpSaving(true);
+
+    try {
+      const res = await fetch(`/api/president/sub-events/${expSubEvent.id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: expForm.title,
+          amount: Number(expForm.amount),
+          note: expForm.note,
+          spentOn: expForm.spentOn,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add expense");
+
+      setExpModalOpen(false);
+      if (refresh) refresh();
+    } catch (err: any) {
+      setExpError(err.message || "Failed to add expense");
+    } finally {
+      setExpSaving(false);
     }
   };
 
@@ -699,7 +839,7 @@ export default function PresidentMegaEventDetailPage({
           </div>
         )}
 
-        {/* TAB 4: BUDGET & ALLOCATIONS (Placeholder for Phase E) */}
+        {/* TAB 4: BUDGET & ALLOCATIONS */}
         {activeTab === "budget" && (
           <div className="space-y-6">
             <div className="pb-3 border-b-2 border-mist">
@@ -709,53 +849,173 @@ export default function PresidentMegaEventDetailPage({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {allocError && (
+              <div className="p-3 bg-rose text-white text-xs font-bold rounded-[8px] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{allocError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card variant="surface" className="p-4">
-                <span className="text-xs uppercase font-bold text-ink/60 block">Overall Budget</span>
+                <span className="text-[11px] uppercase font-extrabold text-ink/60 block">Overall Budget</span>
                 <p className="font-display font-extrabold text-2xl text-emerald mt-1">
                   Rs {mega.overallBudget?.toLocaleString()} PKR
                 </p>
+                <p className="text-[10px] text-ink/60 mt-0.5">Fixed festival limit</p>
               </Card>
 
               <Card variant="surface" className="p-4">
-                <span className="text-xs uppercase font-bold text-ink/60 block">Total Allocated</span>
+                <span className="text-[11px] uppercase font-extrabold text-ink/60 block">Total Allocated</span>
                 <p className="font-display font-extrabold text-2xl text-ink mt-1">
                   Rs {mega.totalAllocated?.toLocaleString()} PKR
                 </p>
+                <p className="text-[10px] text-ink/60 mt-0.5">Across all sub-events</p>
               </Card>
 
               <Card variant="surface" className="p-4">
-                <span className="text-xs uppercase font-bold text-ink/60 block">Unallocated Available</span>
+                <span className="text-[11px] uppercase font-extrabold text-ink/60 block">Unallocated Available</span>
                 <p className="font-display font-extrabold text-2xl text-marigold mt-1">
                   Rs {mega.unallocated?.toLocaleString()} PKR
                 </p>
+                <p className="text-[10px] text-ink/60 mt-0.5">Available for remaining sub-events</p>
+              </Card>
+
+              <Card variant="surface" className="p-4">
+                <span className="text-[11px] uppercase font-extrabold text-ink/60 block">Total Spent</span>
+                <p className="font-display font-extrabold text-2xl text-rose mt-1">
+                  Rs {mega.totalSpent?.toLocaleString()} PKR
+                </p>
+                <p className="text-[10px] text-ink/60 mt-0.5">Remaining: Rs {(mega.overallBudget - mega.totalSpent)?.toLocaleString()} PKR</p>
               </Card>
             </div>
 
-            {/* Sub-events budget summary */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-base text-ink">Sub-events Allocations & Expenses</h4>
-              {allSubEvents.map((sub: any) => (
-                <Card key={sub.id} variant="surface" className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h5 className="font-bold text-base text-ink">{sub.title}</h5>
-                    <p className="text-xs text-ink/60">{sub.date} • Supervisor: {sub.supervisor?.name}</p>
-                  </div>
+            {/* Sub-events budget cards */}
+            <div className="space-y-4">
+              <h4 className="font-display font-bold text-lg text-ink">Sub-events Allocations & Expenditures</h4>
+              {allSubEvents.map((sub: any) => {
+                const isOver80 = sub.allocatedBudget > 0 && sub.spent * 5 >= sub.allocatedBudget * 4;
 
-                  <div className="flex items-center gap-6 text-sm font-semibold">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-ink/60 block">Allocated</span>
-                      <p className="font-bold text-emerald">
-                        {sub.allocatedBudget !== null ? `Rs ${sub.allocatedBudget.toLocaleString()} PKR` : "Not Allocated"}
-                      </p>
+                return (
+                  <Card key={sub.id} variant="surface" className="p-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b-2 border-mist">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-display font-extrabold text-lg text-ink">{sub.title}</h5>
+                          {isOver80 && (
+                            <span className="px-2 py-0.5 bg-rose text-white text-[10px] font-extrabold rounded-full border border-ink shadow-hard-sm">
+                              ⚠️ 80% Budget Threshold Reached
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-ink/60 mt-0.5">
+                          {sub.date} • Venue: {sub.venue} • Supervisor: {sub.supervisor?.name}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs font-bold">
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold text-ink/60 block">Allocated</span>
+                          <span className="text-sm font-extrabold text-emerald">
+                            {sub.allocatedBudget !== null ? `Rs ${sub.allocatedBudget.toLocaleString()} PKR` : "Pending"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold text-ink/60 block">Spent</span>
+                          <span className="text-sm font-extrabold text-rose">
+                            Rs {sub.spent?.toLocaleString()} PKR
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold text-ink/60 block">Remaining</span>
+                          <span className="text-sm font-extrabold text-ink">
+                            {sub.allocatedBudget !== null ? `Rs ${sub.remaining?.toLocaleString()} PKR` : "—"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-ink/60 block">Spent</span>
-                      <p className="font-bold text-rose">Rs {sub.spent.toLocaleString()} PKR</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+
+                    {/* If budget not yet allocated: show allocation input */}
+                    {sub.allocatedBudget === null ? (
+                      <div className="p-4 bg-paper rounded-[12px] border border-ink/30 space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-ink/80">
+                          <DollarSign className="w-4 h-4 text-emerald" />
+                          <span>Set Sub-event Budget Allocation (One-Time Action)</span>
+                        </div>
+                        <p className="text-[11px] text-ink/60">
+                          Maximum available unallocated budget: <strong>Rs {mega.unallocated?.toLocaleString()} PKR</strong>. Once allocated, this amount is locked and cannot be edited.
+                        </p>
+                        <div className="flex items-center gap-3 max-w-md">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1000}
+                            placeholder="Amount in PKR"
+                            value={allocAmounts[sub.id] || ""}
+                            onChange={(e) => setAllocAmounts({ ...allocAmounts, [sub.id]: parseInt(e.target.value) || 0 })}
+                          />
+                          <Button
+                            size="md"
+                            variant="primary"
+                            disabled={allocLoading === sub.id}
+                            onClick={() => handleAllocate(sub.id)}
+                            className="flex-shrink-0"
+                          >
+                            {allocLoading === sub.id ? "Setting..." : "Lock Allocation"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Add Expense Button & Table */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-ink/70">
+                            Logged Expenses ({sub.expenses?.length || 0})
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openAddExpenseModal(sub)}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5 mr-1" /> Add Expense
+                          </Button>
+                        </div>
+
+                        {sub.expenses?.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-ink/60 bg-paper/40 rounded border border-dashed border-ink/20">
+                            No expenses logged for this sub-event yet.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                              <thead>
+                                <tr className="border-b border-ink/30 text-ink/60 font-extrabold uppercase">
+                                  <th className="py-2 px-2">Expense Item</th>
+                                  <th className="py-2 px-2">Date</th>
+                                  <th className="py-2 px-2">Note</th>
+                                  <th className="py-2 px-2 text-right">Amount (PKR)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-mist">
+                                {sub.expenses.map((exp: any) => (
+                                  <tr key={exp.id} className="font-medium text-ink">
+                                    <td className="py-2 px-2 font-bold">{exp.title}</td>
+                                    <td className="py-2 px-2 text-ink/70">{new Date(exp.spentOn).toLocaleDateString()}</td>
+                                    <td className="py-2 px-2 text-ink/60">{exp.note || "—"}</td>
+                                    <td className="py-2 px-2 text-right font-extrabold text-emerald">
+                                      Rs {exp.amount?.toLocaleString()} PKR
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
@@ -976,6 +1236,76 @@ export default function PresidentMegaEventDetailPage({
                   </Button>
                   <Button type="submit" variant="primary" size="md" disabled={taskSaving}>
                     {taskSaving ? "Creating Task..." : "Add Task to Checklist"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Add Expense (Phase E) */}
+        {expModalOpen && (
+          <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-surface border-2 border-ink rounded-[16px] shadow-hard-xl p-6 md:p-8 max-w-md w-full">
+              <div className="flex items-center justify-between pb-3 border-b-2 border-mist mb-5">
+                <div>
+                  <h3 className="font-display font-extrabold text-xl text-ink">Add Expense</h3>
+                  <p className="text-xs text-ink/60 mt-0.5">{expSubEvent?.title}</p>
+                </div>
+                <button onClick={() => setExpModalOpen(false)} className="p-1 hover:bg-mist rounded">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {expError && (
+                <div className="mb-4 p-3 bg-rose text-white text-xs font-bold rounded-[8px] flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{expError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleExpenseSubmit} className="space-y-4">
+                <Input
+                  label="Expense Title / Item"
+                  placeholder="e.g. Cables & Adapters / Refreshments"
+                  value={expForm.title}
+                  onChange={(e) => setExpForm({ ...expForm, title: e.target.value })}
+                  required
+                />
+
+                <Input
+                  label="Amount (PKR)"
+                  type="number"
+                  min={1}
+                  step={100}
+                  value={expForm.amount}
+                  onChange={(e) => setExpForm({ ...expForm, amount: parseInt(e.target.value) || 0 })}
+                  required
+                  helper={`Remaining sub-event budget: Rs ${expSubEvent?.remaining?.toLocaleString()} PKR`}
+                />
+
+                <Input
+                  label="Date of Expenditure"
+                  type="date"
+                  value={expForm.spentOn}
+                  onChange={(e) => setExpForm({ ...expForm, spentOn: e.target.value })}
+                  required
+                />
+
+                <Textarea
+                  label="Note / Details (Optional)"
+                  placeholder="Receipt number, vendor name, etc."
+                  value={expForm.note}
+                  onChange={(e) => setExpForm({ ...expForm, note: e.target.value })}
+                  rows={2}
+                />
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-mist">
+                  <Button type="button" variant="ghost" size="md" onClick={() => setExpModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary" size="md" disabled={expSaving}>
+                    {expSaving ? "Recording..." : "Record Expense"}
                   </Button>
                 </div>
               </form>
