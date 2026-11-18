@@ -13,22 +13,49 @@ export const dynamic = "force-dynamic";
 export default async function LandingPage() {
   const now = new Date();
 
-  // Load real upcoming approved events from DB (3–6)
-  const rawEvents = await prisma.event.findMany({
-    where: {
-      approvalStatus: "APPROVED",
-      isCancelled: false,
-      endAt: { gte: now },
-    },
-    include: {
-      society: { select: { id: true, name: true, category: true } },
-      _count: {
-        select: { registrations: { where: { status: "REGISTERED" } } },
+  // Load real upcoming approved events from DB (3–6) with cold-start retry
+  let rawEvents: any[] = [];
+  try {
+    rawEvents = await prisma.event.findMany({
+      where: {
+        approvalStatus: "APPROVED",
+        isCancelled: false,
+        endAt: { gte: now },
       },
-    },
-    orderBy: { startAt: "asc" },
-    take: 6,
-  });
+      include: {
+        society: { select: { id: true, name: true, category: true } },
+        _count: {
+          select: { registrations: { where: { status: "REGISTERED" } } },
+        },
+      },
+      orderBy: { startAt: "asc" },
+      take: 6,
+    });
+  } catch (err) {
+    console.error("[Landing page Neon cold start retry]:", err);
+    try {
+      // 1.5s delay to allow Neon compute to finish waking up
+      await new Promise((r) => setTimeout(r, 1500));
+      rawEvents = await prisma.event.findMany({
+        where: {
+          approvalStatus: "APPROVED",
+          isCancelled: false,
+          endAt: { gte: now },
+        },
+        include: {
+          society: { select: { id: true, name: true, category: true } },
+          _count: {
+            select: { registrations: { where: { status: "REGISTERED" } } },
+          },
+        },
+        orderBy: { startAt: "asc" },
+        take: 6,
+      });
+    } catch (secondErr) {
+      console.error("[Landing page second fetch attempt failed]:", secondErr);
+      rawEvents = [];
+    }
+  }
 
   const events = rawEvents
     .map((e) => {
