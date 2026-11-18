@@ -268,14 +268,21 @@ export default function AdminDashboardPage() {
         )}
 
         {error && (
-          <div className="p-4 bg-rose text-white text-sm font-semibold rounded-[12px] border-2 border-ink shadow-hard-sm flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-              <span>{error}</span>
+          <div className="p-4 bg-rose text-white text-sm font-semibold rounded-[12px] border-2 border-ink shadow-hard-sm flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              <button onClick={() => setError("")} className="hover:opacity-80">
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <button onClick={() => setError("")} className="hover:opacity-80">
-              <X className="w-4 h-4" />
-            </button>
+            {error.toLowerCase().includes("already started") && (
+              <p className="text-xs text-white/90 pl-7 font-normal">
+                👉 <strong>What to do:</strong> University governance strictly prevents approving events after their start time has passed. Please click <strong>&quot;Decline&quot;</strong> on this proposal with remarks (e.g., &quot;Start time passed, please submit a new proposal with a future date&quot;).
+              </p>
+            )}
           </div>
         )}
 

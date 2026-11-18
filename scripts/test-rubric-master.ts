@@ -124,7 +124,12 @@ async function runMasterRubricAudit() {
   // -------------------------------------------------------------
   console.log("\n--- Section 4: Student Registration & Capacity (12 pts) ---");
   const approvedEvent = await prisma.event.findFirst({
-    where: { approvalStatus: "APPROVED", isCancelled: false, startAt: { gt: now } },
+    where: {
+      approvalStatus: "APPROVED",
+      isCancelled: false,
+      startAt: { gt: now },
+      registrationDeadline: { gt: now },
+    },
   });
 
   if (approvedEvent && testStudent) {

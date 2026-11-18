@@ -126,10 +126,10 @@ export default function StudentSupervisedDetailPage({
     <AppShell role="STUDENT" user={user} title={`Supervising: ${subEvent.title}`}>
       <div className="space-y-8 max-w-6xl mx-auto">
         <Link
-          href="/student"
+          href="/student/supervised"
           className="inline-flex items-center text-xs font-bold text-ink/70 hover:text-ink hover:underline"
         >
-          <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Dashboard
+          <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Supervised Sub-events
         </Link>
 
         {/* Hero Card */}
@@ -294,3 +294,4 @@ export default function StudentSupervisedDetailPage({
     </AppShell>
   );
 }
+

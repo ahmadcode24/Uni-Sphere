@@ -127,9 +127,12 @@ function LoginForm() {
             onClick={() => fillDemo("student1@unisphere.test", "Pass@12345")}
             className="px-2 py-1.5 bg-paper hover:bg-mist text-ink text-xs font-bold rounded-[8px] border-2 border-ink shadow-hard-sm transition-all"
           >
-            Student
+            Student / Supervisor
           </button>
         </div>
+        <p className="text-[11px] text-ink/60 mt-2">
+          Track Supervisors log in with their student account to manage festival sub-events.
+        </p>
       </div>
 
       {/* Footer link */}

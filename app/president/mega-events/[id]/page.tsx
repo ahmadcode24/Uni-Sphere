@@ -184,17 +184,23 @@ export default function PresidentMegaEventDetailPage({
     }
   }, [liveMega]);
 
+  const refreshStudents = async () => {
+    try {
+      const res = await fetch("/api/users/students");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.students) setStudents(data.students);
+      }
+    } catch {}
+  };
+
   // Fetch all registered students for supervisor & task assignment
   useEffect(() => {
-    fetch("/api/users/students")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.students) setStudents(data.students);
-      })
-      .catch(() => {});
+    refreshStudents();
   }, []);
 
   const openCreateSubEventModal = () => {
+    refreshStudents();
     setEditingSubEvent(null);
     setSubForm({
       title: "",
@@ -210,6 +216,7 @@ export default function PresidentMegaEventDetailPage({
   };
 
   const openEditSubEventModal = (sub: any) => {
+    refreshStudents();
     setEditingSubEvent(sub);
     setSubForm({
       title: sub.title,
@@ -1084,9 +1091,19 @@ export default function PresidentMegaEventDetailPage({
 
                 {/* Supervisor Picker (Student only) */}
                 <div>
-                  <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">
-                    Designated Supervisor (Student)
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-ink uppercase tracking-wider">
+                      Designated Supervisor (Student)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={refreshStudents}
+                      className="text-[11px] font-bold text-marigold hover:underline flex items-center gap-1"
+                      title="Reload newly registered students"
+                    >
+                      ↻ Refresh Student List
+                    </button>
+                  </div>
                   <select
                     value={subForm.supervisorId}
                     onChange={(e) => setSubForm({ ...subForm, supervisorId: e.target.value })}
@@ -1101,7 +1118,7 @@ export default function PresidentMegaEventDetailPage({
                     ))}
                   </select>
                   <span className="text-[11px] text-ink/60 mt-1 block">
-                    Supervisor will manage the preparation checklist for this sub-event.
+                    Any student registered with university email can be designated to manage the track checklist.
                   </span>
                 </div>
 

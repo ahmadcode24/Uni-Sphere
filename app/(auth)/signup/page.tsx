@@ -88,7 +88,7 @@ function SignupForm() {
             }`}
           >
             <UserCheck className="w-5 h-5" />
-            <span>Student</span>
+            <span>Student / Supervisor</span>
           </button>
           <button
             type="button"
@@ -103,6 +103,17 @@ function SignupForm() {
             <span>Society President</span>
           </button>
         </div>
+        <p className="text-[11px] text-ink/65 mt-2">
+          {role === "STUDENT" ? (
+            <span>
+              ℹ️ <strong>Track Supervisors:</strong> Register here with your email as a student. Society Presidents can designate you as supervisor for festival tracks.
+            </span>
+          ) : (
+            <span>
+              ℹ️ <strong>Society Presidents:</strong> Lead your society, submit proposals, host mega events, and appoint student supervisors.
+            </span>
+          )}
+        </p>
       </div>
 
       {/* Form */}

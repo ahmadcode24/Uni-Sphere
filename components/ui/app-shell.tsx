@@ -60,6 +60,7 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
   const navItemsByRole: Record<string, NavItem[]> = {
     STUDENT: [
       { label: "Dashboard", href: "/student", icon: <Home className="w-5 h-5" /> },
+      { label: "Supervised Sub-events", href: "/student/supervised", icon: <Sparkles className="w-5 h-5" /> },
       { label: "Browse Societies", href: "/student/societies", icon: <Compass className="w-5 h-5" /> },
       { label: "Browse Events", href: "/student/events", icon: <Calendar className="w-5 h-5" /> },
       { label: "My Registrations", href: "/student/registrations", icon: <CheckSquare className="w-5 h-5" /> },

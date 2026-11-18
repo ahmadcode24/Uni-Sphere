@@ -97,9 +97,16 @@ export default function StudentDashboard() {
         <Card variant="featured" colorBlock="marigold" className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <span className="inline-block px-3 py-1 bg-ink text-paper font-bold text-xs rounded-full border border-ink shadow-hard-sm mb-3">
-                Student Campus Portal
-              </span>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="inline-block px-3 py-1 bg-ink text-paper font-bold text-xs rounded-full border border-ink shadow-hard-sm">
+                  Student Campus Portal
+                </span>
+                {supervisedSubEvents.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald text-white font-extrabold text-xs rounded-full border border-ink shadow-hard-sm">
+                    <Sparkles className="w-3.5 h-3.5" /> Track Supervisor ({supervisedSubEvents.length})
+                  </span>
+                )}
+              </div>
               <h1 className="font-display font-extrabold text-3xl md:text-4xl text-ink tracking-tight">
                 Welcome back, {user?.name.split(" ")[0]}!
               </h1>
@@ -267,14 +274,21 @@ export default function StudentDashboard() {
                 My Supervised Sub-events ({supervisedSubEvents.length})
               </h3>
             </div>
-            <span className="text-xs font-bold text-ink/60">
-              Assigned by Society Presidents
-            </span>
+            <Link
+              href="/student/supervised"
+              className="text-xs font-bold text-marigold hover:underline flex items-center gap-1"
+            >
+              <span>View All Tracks</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           {supervisedSubEvents.length === 0 ? (
-            <Card variant="surface" className="p-6 text-center text-xs text-ink/60 border border-dashed border-ink/20">
-              You are not supervising any sub-events right now.
+            <Card variant="surface" className="p-6 text-center text-xs text-ink/60 border border-dashed border-ink/20 space-y-2">
+              <p>You are not supervising any sub-events right now.</p>
+              <Link href="/student/supervised" className="inline-block text-xs font-bold text-marigold hover:underline">
+                Learn more about Track Supervision →
+              </Link>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

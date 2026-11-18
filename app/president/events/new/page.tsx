@@ -169,7 +169,7 @@ export default function NewEventPage() {
                 value={form.startAt}
                 onChange={(e) => setForm({ ...form, startAt: e.target.value })}
                 required
-                helper="Timezone: Asia/Karachi (PKT)"
+                helper="Timezone: Asia/Karachi (PKT). Must be set in the future so Admin can approve before start."
               />
 
               <Input
