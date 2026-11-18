@@ -59,6 +59,8 @@ export default function PresidentEventsPage() {
         return "approved";
       case "PENDING":
         return "pending";
+      case "CANCEL_REQUESTED":
+        return "high";
       case "REJECTED":
         return "rejected";
       case "DRAFT":
@@ -110,7 +112,11 @@ export default function PresidentEventsPage() {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <Badge variant={statusBadge}>
-                        {e.isCancelled ? "Cancelled" : e.approvalStatus}
+                        {e.isCancelled
+                          ? "Cancelled"
+                          : e.approvalStatus === "CANCEL_REQUESTED"
+                          ? "Cancel Requested"
+                          : e.approvalStatus}
                       </Badge>
                       <span className="text-xs font-bold text-ink/60">
                         Capacity: {e.capacity}

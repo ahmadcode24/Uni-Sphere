@@ -121,3 +121,28 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const session = await requireUser(["ADMIN", "PRESIDENT"]);
+
+    if (session.role === "ADMIN") {
+      const { adminDeleteEvent } = await import("@/lib/services/admin");
+      const result = await adminDeleteEvent(session.userId, params.id);
+      return NextResponse.json(result);
+    }
+
+    if (session.role === "PRESIDENT") {
+      const { deleteEventDraft } = await import("@/lib/services/event");
+      const result = await deleteEventDraft(session.userId, params.id);
+      return NextResponse.json(result);
+    }
+
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Failed to delete event" },
+      { status: err.status || 400 }
+    );
+  }
+}
+

@@ -47,8 +47,7 @@ export default function NewEventPage() {
     load();
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (submitForApproval: boolean) => {
     setError("");
     setSaving(true);
 
@@ -56,7 +55,7 @@ export default function NewEventPage() {
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, submitForApproval }),
       });
 
       const data = await res.json();
@@ -70,6 +69,11 @@ export default function NewEventPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave(true);
   };
 
   if (loading) {
@@ -190,14 +194,29 @@ export default function NewEventPage() {
               </div>
             </div>
 
-            <div className="pt-5 border-t-2 border-mist flex justify-end gap-3">
+            <div className="pt-5 border-t-2 border-mist flex flex-wrap justify-end gap-3">
               <Link href="/president/events">
                 <Button type="button" variant="ghost">
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" variant="primary" size="lg" disabled={saving}>
-                {saving ? "Creating Draft..." : "Save Proposal as Draft"}
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                disabled={saving}
+                onClick={() => handleSave(false)}
+              >
+                Save as Draft
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                disabled={saving}
+                onClick={() => handleSave(true)}
+              >
+                {saving ? "Submitting Proposal..." : "Submit for Admin Approval →"}
               </Button>
             </div>
           </form>

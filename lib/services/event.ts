@@ -93,6 +93,23 @@ export function eventCaps(
     };
   }
 
+  // 3b. Cancellation requested
+  if (status === "CANCEL_REQUESTED") {
+    return {
+      publicVisible: false,
+      publicListed: false,
+      canEdit: false,
+      canSubmit: false,
+      canRegister: false,
+      canInvite: false,
+      canAddExpense: false,
+      canCancel: false,
+      canAdminApprove: false,
+      canAdminReject: false,
+      scheduleStatus: sched,
+    };
+  }
+
   // 4. Rejected
   if (status === "REJECTED") {
     const isPastStart = now >= startAt;
@@ -189,6 +206,7 @@ export async function createEvent(
     registrationDeadline: Date;
     capacity: number;
     proposedBudget: number;
+    submitImmediately?: boolean;
   }
 ) {
   const society = await prisma.society.findUnique({
@@ -217,7 +235,8 @@ export async function createEvent(
     throw new AppError("INVALID_BUDGET", "Proposed budget cannot be negative.", 400);
   }
 
-  return prisma.event.create({
+  const submitNow = data.submitImmediately !== false;
+  const created = await prisma.event.create({
     data: {
       societyId: society.id,
       title: data.title.trim(),
@@ -228,9 +247,92 @@ export async function createEvent(
       registrationDeadline: data.registrationDeadline,
       capacity: data.capacity,
       proposedBudget: data.proposedBudget,
-      approvalStatus: "DRAFT",
+      approvalStatus: submitNow ? "PENDING" : "DRAFT",
+      submittedAt: submitNow ? new Date() : null,
     },
   });
+
+  if (submitNow) {
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    });
+    if (admins.length > 0) {
+      await notify(admins.map((a) => a.id), {
+        type: "EVENT_SUBMITTED",
+        message: `New proposal submitted: '${created.title}' by ${society.name}.`,
+        link: `/admin`,
+      });
+    }
+  }
+
+  return created;
+}
+
+export async function deleteEventDraft(presidentId: string, eventId: string) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { society: true },
+  });
+
+  if (!event) throw new AppError("EVENT_NOT_FOUND", "Event not found", 404);
+  if (event.society.presidentId !== presidentId) {
+    throw new AppError("FORBIDDEN", "Unauthorized to delete this event.", 403);
+  }
+
+  if (event.approvalStatus !== "DRAFT") {
+    throw new AppError(
+      "CANNOT_DELETE_NON_DRAFT",
+      "Only Draft events can be deleted directly. For submitted or approved events, please request cancellation from administration.",
+      400
+    );
+  }
+
+  await prisma.$transaction([
+    prisma.registration.deleteMany({ where: { eventId } }),
+    prisma.invitation.deleteMany({ where: { eventId } }),
+    prisma.task.deleteMany({ where: { eventId } }),
+    prisma.expense.deleteMany({ where: { eventId } }),
+    prisma.event.delete({ where: { id: eventId } }),
+  ]);
+
+  return { success: true, message: "Draft proposal deleted successfully." };
+}
+
+export async function requestEventCancellation(presidentId: string, eventId: string, reason?: string) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { society: true },
+  });
+
+  if (!event) throw new AppError("EVENT_NOT_FOUND", "Event not found", 404);
+  if (event.society.presidentId !== presidentId) {
+    throw new AppError("FORBIDDEN", "Unauthorized to request cancellation for this event.", 403);
+  }
+
+  if (event.isCancelled) {
+    throw new AppError("ALREADY_CANCELLED", "This event is already cancelled.", 400);
+  }
+
+  const updated = await prisma.event.update({
+    where: { id: eventId },
+    data: {
+      approvalStatus: "CANCEL_REQUESTED",
+      adminRemarks: reason ? `Cancellation Request: ${reason.trim()}` : "President requested cancellation.",
+    },
+  });
+
+  // Notify Admins
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  if (admins.length > 0) {
+    await notify(admins.map((a) => a.id), {
+      type: "EVENT_CANCEL_REQUESTED",
+      message: `Cancellation requested: '${event.title}' by ${event.society.name}.`,
+      link: `/admin`,
+    });
+  }
+
+  return updated;
 }
 
 export async function submitEvent(presidentId: string, eventId: string) {

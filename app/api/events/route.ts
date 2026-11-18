@@ -15,6 +15,7 @@ const createEventSchema = z.object({
   registrationDeadline: z.string().min(1, "Registration deadline is required"),
   capacity: z.coerce.number().int().min(1, "Capacity must be at least 1"),
   proposedBudget: z.coerce.number().int().min(0, "Proposed budget must be >= 0"),
+  submitForApproval: z.boolean().optional().default(true),
 });
 
 export async function GET() {
@@ -89,6 +90,7 @@ export async function POST(req: Request) {
       registrationDeadline,
       capacity: d.capacity,
       proposedBudget: d.proposedBudget,
+      submitImmediately: d.submitForApproval !== false,
     });
 
     return NextResponse.json({ success: true, event }, { status: 201 });

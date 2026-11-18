@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   UserCheck,
   CheckSquare,
+  Trash2,
 } from "lucide-react";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card } from "@/components/ui/card";
@@ -135,23 +136,41 @@ export default function PresidentEventDetailPage({ params }: { params: { id: str
     }
   };
 
-  const handleCancelEvent = async () => {
-    if (!confirm("Are you sure you want to CANCEL this event? Cancellation is irreversible and will notify all registered attendees.")) {
-      return;
+  const handleDeleteDraft = async () => {
+    if (!confirm("Are you sure you want to permanently delete this draft proposal?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/events/${params.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete draft");
+      router.push("/president/events");
+    } catch (err: any) {
+      setError(err.message || "Failed to delete draft");
+      setActionLoading(false);
     }
+  };
+
+  const handleCancelEvent = async () => {
+    const reason = window.prompt("Submit cancellation request to university administration?\n\nEnter reason for cancellation:");
+    if (reason === null) return; // user cancelled
+
     setActionLoading(true);
     setError("");
     setMessage("");
 
     try {
-      const res = await fetch(`/api/events/${params.id}/cancel`, { method: "POST" });
+      const res = await fetch(`/api/events/${params.id}/cancel-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to cancel event");
+      if (!res.ok) throw new Error(data.error || "Failed to request cancellation");
 
-      setMessage("Event has been cancelled. Registrations have been closed.");
+      setMessage("Cancellation request submitted to University Administration for review.");
       await loadData();
     } catch (err: any) {
-      setError(err.message || "Cancellation failed");
+      setError(err.message || "Cancellation request failed");
     } finally {
       setActionLoading(false);
     }
@@ -261,15 +280,32 @@ export default function PresidentEventDetailPage({ params }: { params: { id: str
               </Button>
             )}
 
-            {caps?.canCancel && (
+            {event?.approvalStatus === "DRAFT" && (
+              <Button
+                variant="rose"
+                size="sm"
+                disabled={actionLoading}
+                onClick={handleDeleteDraft}
+              >
+                <Trash2 className="w-4 h-4 mr-1" /> Delete Draft
+              </Button>
+            )}
+
+            {event?.approvalStatus !== "DRAFT" && !event?.isCancelled && event?.approvalStatus !== "CANCEL_REQUESTED" && (
               <Button
                 variant="rose"
                 size="sm"
                 disabled={actionLoading}
                 onClick={handleCancelEvent}
               >
-                <XCircle className="w-4 h-4 mr-1" /> Cancel Event
+                <XCircle className="w-4 h-4 mr-1" /> Request Cancellation
               </Button>
+            )}
+
+            {event?.approvalStatus === "CANCEL_REQUESTED" && (
+              <span className="px-3 py-1.5 bg-rose text-white text-xs font-bold rounded-[8px] border-2 border-ink shadow-hard-sm">
+                Cancellation Requested (Awaiting Admin Decision)
+              </span>
             )}
 
             {caps?.publicVisible && (

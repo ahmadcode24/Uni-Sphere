@@ -14,6 +14,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Building2,
+  Trash2,
 } from "lucide-react";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card } from "@/components/ui/card";
@@ -95,6 +96,19 @@ export default function AdminReviewPage({ params }: { params: { id: string } }) 
     } catch (err: any) {
       setError(err.message || "Decision submission failed");
     } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to permanently DELETE "${event?.title}"? This cannot be undone.`)) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/events/${params.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete event");
+      router.push("/admin");
+    } catch (err: any) {
+      setError(err.message || "Failed to delete");
       setActionLoading(false);
     }
   };
@@ -245,6 +259,17 @@ export default function AdminReviewPage({ params }: { params: { id: string } }) 
               {event.adminRemarks && <p className="mt-1">Remarks: &ldquo;{event.adminRemarks}&rdquo;</p>}
             </div>
           )}
+
+          <div className="pt-4 border-t-2 border-mist flex justify-end">
+            <Button
+              variant="rose"
+              size="sm"
+              disabled={actionLoading}
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-4 h-4 mr-1" /> Delete Event Permanently
+            </Button>
+          </div>
         </Card>
       </div>
     </AppShell>
