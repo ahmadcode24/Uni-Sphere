@@ -8,4 +8,10 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 
+// Apply SQLite PRAGMAs for concurrency
+if (!globalForPrisma.prisma) {
+  prisma.$queryRawUnsafe("PRAGMA journal_mode = WAL;").catch(() => {});
+  prisma.$queryRawUnsafe("PRAGMA busy_timeout = 30000;").catch(() => {});
+}
+
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
