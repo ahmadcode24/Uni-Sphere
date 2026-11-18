@@ -12,6 +12,7 @@ export type BadgeVariant =
   | "high"
   | "medium"
   | "low"
+  | "seats"
   | "default";
 
 interface BadgeProps {
@@ -42,6 +43,7 @@ export const Badge: React.FC<BadgeProps> = ({
     high: "bg-rose text-white",
     medium: "bg-marigold text-ink",
     low: "bg-mist text-ink",
+    seats: "bg-marigold text-ink",
     default: "bg-paper text-ink",
   };
 

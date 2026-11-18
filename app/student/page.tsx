@@ -103,7 +103,7 @@ export default function StudentDashboard() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/events">
+              <Link href="/student/events">
                 <Button variant="primary" size="md">
                   <Calendar className="w-4 h-4 mr-1" /> Browse Events
                 </Button>

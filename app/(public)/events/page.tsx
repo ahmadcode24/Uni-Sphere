@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Calendar, MapPin, Clock, ArrowRight, Compass } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,9 @@ import { fmtPKT } from "@/lib/time";
 import { SOCIETY_CATEGORIES } from "@/lib/services/society";
 
 export default function BrowseEventsPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
@@ -21,7 +24,20 @@ export default function BrowseEventsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/events/public");
+        const [res, uRes] = await Promise.all([
+          fetch("/api/events/public"),
+          fetch("/api/auth/me"),
+        ]);
+
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          setUser(uData.user);
+          if (uData.user?.role === "STUDENT") {
+            router.replace("/student/events");
+            return;
+          }
+        }
+
         if (res.ok) {
           const data = await res.json();
           setEvents(data.events || []);
@@ -33,7 +49,7 @@ export default function BrowseEventsPage() {
       }
     }
     load();
-  }, []);
+  }, [router]);
 
   const filtered = events.filter((e) => {
     const matchesCat = category === "ALL" || e.society?.category === category;
@@ -56,16 +72,26 @@ export default function BrowseEventsPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="secondary" size="sm">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button variant="primary" size="sm">
-                Sign up
-              </Button>
-            </Link>
+            {user ? (
+              <Link href={user.role === "PRESIDENT" ? "/president" : user.role === "ADMIN" ? "/admin" : "/student"}>
+                <Button variant="primary" size="sm">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="secondary" size="sm">
+                    Log in
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button variant="primary" size="sm">
+                    Sign up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

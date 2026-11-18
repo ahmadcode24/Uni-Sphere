@@ -60,7 +60,7 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
     STUDENT: [
       { label: "Dashboard", href: "/student", icon: <Home className="w-5 h-5" /> },
       { label: "Browse Societies", href: "/student/societies", icon: <Compass className="w-5 h-5" /> },
-      { label: "Browse Events", href: "/events", icon: <Calendar className="w-5 h-5" /> },
+      { label: "Browse Events", href: "/student/events", icon: <Calendar className="w-5 h-5" /> },
       { label: "My Registrations", href: "/student/registrations", icon: <CheckSquare className="w-5 h-5" /> },
       { label: "Volunteer Invites", href: "/student/invitations", icon: <Users className="w-5 h-5" /> },
       { label: "My Tasks", href: "/student/tasks", icon: <CheckSquare className="w-5 h-5" /> },

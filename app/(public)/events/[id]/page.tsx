@@ -82,6 +82,10 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
         if (uRes.ok) {
           const uData = await uRes.json();
           setUser(uData.user);
+          if (uData.user?.role === "STUDENT") {
+            router.replace(`/student/events/${params.id}`);
+            return;
+          }
         }
       } catch {
         // logged out is allowed
