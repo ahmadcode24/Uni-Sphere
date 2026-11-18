@@ -92,7 +92,7 @@ export default function StudentRegistrationsPage() {
               Manage your registered event schedule and check venue directions.
             </p>
           </div>
-          <Link href="/events">
+          <Link href="/student/events">
             <Button variant="primary" size="md">
               <Calendar className="w-4 h-4 mr-1" /> Discover More Events
             </Button>
@@ -112,7 +112,7 @@ export default function StudentRegistrationsPage() {
             title="No Registrations Yet"
             description="You haven't registered for any events yet. Check out the campus noticeboard to claim a seat."
             action={
-              <Link href="/events">
+              <Link href="/student/events">
                 <Button variant="primary">Browse Events</Button>
               </Link>
             }
@@ -155,7 +155,7 @@ export default function StudentRegistrationsPage() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-mist">
-                    <Link href={`/events/${r.event.id}`}>
+                    <Link href={`/student/events/${r.event.id}`}>
                       <Button variant="secondary" size="sm">
                         Notice Details
                       </Button>

@@ -60,7 +60,7 @@ function LoginForm() {
           Welcome back
         </h1>
         <p className="text-sm text-ink/70 mt-1">
-          Enter your credentials to receive a 6-digit terminal verification code.
+          Enter your credentials to receive your 6-digit verification code.
         </p>
       </div>
 

@@ -281,7 +281,7 @@ export default function StudentSocietyDetailPage({ params }: { params: { id: str
                     <span className="text-xs font-bold text-emerald">
                       {e.seatsRemaining} seats left
                     </span>
-                    <Link href={`/events/${e.id}`}>
+                    <Link href={`/student/events/${e.id}`}>
                       <span className="text-xs font-bold text-ink hover:underline">
                         Event Details →
                       </span>
