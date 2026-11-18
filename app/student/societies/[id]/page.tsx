@@ -137,8 +137,15 @@ export default function StudentSocietyDetailPage({ params }: { params: { id: str
         <Card variant="surface" className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="upcoming">{society.category}</Badge>
+              <div className="flex items-center gap-3 mb-2">
+                {society.logoUrl && (
+                  <div className="w-12 h-12 rounded-[8px] border-2 border-ink overflow-hidden bg-paper flex-shrink-0">
+                    <img src={society.logoUrl} alt={society.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div>
+                  <Badge variant="upcoming">{society.category}</Badge>
+                </div>
                 {membershipStatus === "APPROVED" && (
                   <Badge variant="approved">
                     {membership?.label === "CORE" ? "⭐ Core Member" : "Official Member"}

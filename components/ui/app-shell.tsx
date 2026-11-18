@@ -97,8 +97,29 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
 
   useEffect(() => {
     fetchNotifications();
+
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource("/api/stream");
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.kind === "notification" || data.type === "notification") {
+            fetchNotifications();
+          }
+        } catch {
+          // ignore parse errors
+        }
+      };
+    } catch {
+      // ignore EventSource errors
+    }
+
     const interval = setInterval(fetchNotifications, 12000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (es) es.close();
+    };
   }, []);
 
   // Close bell on outside click

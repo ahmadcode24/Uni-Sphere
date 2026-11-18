@@ -53,6 +53,23 @@ export default function AdminDashboardPage() {
       }
     }
     load();
+
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource("/api/stream");
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.kind === "admin" || data.kind === "notification") {
+            fetch("/api/admin/stats").then((r) => r.json()).then(setStats).catch(() => {});
+          }
+        } catch {}
+      };
+    } catch {}
+
+    return () => {
+      if (es) es.close();
+    };
   }, [router]);
 
   if (loading) {

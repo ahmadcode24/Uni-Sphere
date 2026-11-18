@@ -49,9 +49,14 @@ export default function StudentInvitationsPage() {
     loadData();
   }, [router]);
 
-  const handleRespond = async (invitationId: string, action: "accept" | "decline") => {
-    const verb = action === "accept" ? "Accept" : "Decline";
-    if (!confirm(`${verb} this volunteer invitation? Your response is final.`)) return;
+  const handleRespond = async (
+    invitationId: string,
+    action: "accept" | "decline" | "withdraw"
+  ) => {
+    if (action !== "withdraw") {
+      const verb = action === "accept" ? "Accept" : "Decline";
+      if (!confirm(`${verb} this volunteer invitation? Your response is final.`)) return;
+    }
 
     setActionLoading(invitationId);
     setMessage("");
@@ -184,9 +189,26 @@ export default function StudentInvitationsPage() {
                         <h4 className="font-bold text-sm text-ink">{inv.event.title}</h4>
                         <p className="text-xs text-ink/60">{inv.event.society?.name}</p>
                       </div>
-                      <Badge variant={inv.status === "ACCEPTED" ? "approved" : "rejected"}>
-                        {inv.status === "ACCEPTED" ? "Accepted Volunteer" : "Declined"}
-                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={inv.status === "ACCEPTED" ? "approved" : "rejected"}>
+                          {inv.status === "ACCEPTED" ? "Accepted Volunteer" : "Declined"}
+                        </Badge>
+                        {inv.status === "ACCEPTED" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-rose border-rose/30 hover:bg-rose/10"
+                            disabled={actionLoading === inv.id}
+                            onClick={() => {
+                              if (confirm("Withdraw from volunteering? Any in-progress tasks will be reset to To Do and unassigned.")) {
+                                handleRespond(inv.id, "withdraw");
+                              }
+                            }}
+                          >
+                            Withdraw
+                          </Button>
+                        )}
+                      </div>
                     </Card>
                   ))}
                 </div>

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
-import { respondToInvitation } from "@/lib/services/volunteer";
+import { respondToInvitation, withdrawVolunteer } from "@/lib/services/volunteer";
 
 const respondSchema = z.object({
-  action: z.enum(["accept", "decline"]),
+  action: z.enum(["accept", "decline", "withdraw"]),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -14,7 +14,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const parseResult = respondSchema.safeParse(body);
     if (!parseResult.success) {
-      return NextResponse.json({ error: "Action must be accept or decline" }, { status: 400 });
+      return NextResponse.json({ error: "Action must be accept, decline, or withdraw" }, { status: 400 });
+    }
+
+    if (parseResult.data.action === "withdraw") {
+      const updated = await withdrawVolunteer(session.userId, params.id);
+      return NextResponse.json({ success: true, invitation: updated });
     }
 
     const updated = await respondToInvitation(session.userId, params.id, parseResult.data.action);

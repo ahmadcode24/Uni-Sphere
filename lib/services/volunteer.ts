@@ -130,3 +130,58 @@ export async function getStudentInvitations(studentId: string) {
   });
 }
 
+export async function withdrawVolunteer(studentId: string, invitationId: string) {
+  const invite = await prisma.invitation.findUnique({
+    where: { id: invitationId },
+    include: { event: { include: { society: true } } },
+  });
+
+  if (!invite) throw new AppError("NOT_FOUND", "Invitation not found", 404);
+  if (invite.studentId !== studentId) {
+    throw new AppError("FORBIDDEN", "Unauthorized.", 403);
+  }
+
+  // Update invitation status
+  const updatedInvite = await prisma.invitation.update({
+    where: { id: invitationId },
+    data: { status: "DECLINED" },
+  });
+
+  // Withdrawal rules:
+  // 1. Incomplete tasks (TODO) -> unassigned (assigneeId: null)
+  // 2. In Progress tasks (IN_PROGRESS) -> status: "TODO", assigneeId: null
+  // 3. Completed tasks (COMPLETED) -> keep assignee and remain COMPLETED
+  await prisma.$transaction(async (tx) => {
+    await tx.task.updateMany({
+      where: {
+        eventId: invite.eventId,
+        assigneeId: studentId,
+        status: "IN_PROGRESS",
+      },
+      data: {
+        status: "TODO",
+        assigneeId: null,
+      },
+    });
+
+    await tx.task.updateMany({
+      where: {
+        eventId: invite.eventId,
+        assigneeId: studentId,
+        status: "TODO",
+      },
+      data: {
+        assigneeId: null,
+      },
+    });
+  });
+
+  await notify(invite.event.society.presidentId, {
+    type: "VOLUNTEER_WITHDRAWN",
+    message: `Volunteer withdrew from '${invite.event.title}'. Incomplete tasks were reset to To Do and unassigned.`,
+    link: `/president/events/${invite.eventId}/tasks`,
+  });
+
+  return updatedInvite;
+}
+

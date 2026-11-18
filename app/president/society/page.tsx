@@ -27,7 +27,32 @@ export default function PresidentSocietyPage() {
     category: "Technology",
     contactEmail: "",
     contactPhone: "",
+    logoUrl: "",
   });
+  const [logoError, setLogoError] = useState("");
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoError("");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      setLogoError("Logo must be a PNG, JPG, WEBP, or SVG image.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Logo image size must be under 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData((prev) => ({ ...prev, logoUrl: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -51,6 +76,7 @@ export default function PresidentSocietyPage() {
               category: sData.society.category,
               contactEmail: sData.society.contactEmail,
               contactPhone: sData.society.contactPhone || "",
+              logoUrl: sData.society.logoUrl || "",
             });
           }
         }
@@ -189,6 +215,28 @@ export default function PresidentSocietyPage() {
                 value={formData.contactPhone}
                 onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink/70">
+                Society Logo (Max 2MB — JPG, PNG, WEBP, SVG)
+              </label>
+              <div className="flex items-center gap-4">
+                {formData.logoUrl && (
+                  <div className="w-16 h-16 rounded border-2 border-ink overflow-hidden bg-surface flex-shrink-0">
+                    <img src={formData.logoUrl} alt="Society Logo" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleLogoUpload}
+                    className="block w-full text-sm text-ink file:mr-4 file:py-2 file:px-4 file:rounded file:border-2 file:border-ink file:text-xs file:font-bold file:bg-surface file:text-ink hover:file:bg-paper cursor-pointer"
+                  />
+                  {logoError && <p className="text-xs text-rose mt-1">{logoError}</p>}
+                </div>
+              </div>
             </div>
 
             <div className="pt-4 border-t-2 border-mist flex justify-end">

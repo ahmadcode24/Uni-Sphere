@@ -86,6 +86,27 @@ export default function EventTasksPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     loadData();
+
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`/api/stream?event=${params.id}`);
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.kind === "task") {
+            loadData();
+          }
+        } catch {
+          // ignore
+        }
+      };
+    } catch {
+      // ignore
+    }
+
+    return () => {
+      if (es) es.close();
+    };
   }, [params.id]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
