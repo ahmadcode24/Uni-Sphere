@@ -353,6 +353,7 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-mist">
                   {pendingList.map((e: any) => {
                     const isBusy = actionLoadingId === e.id;
+                    const isPastStart = new Date() >= new Date(e.startAt);
                     return (
                       <tr key={e.id} className="font-medium text-ink hover:bg-mist/20 transition-colors">
                         <td className="py-4 px-2">
@@ -369,20 +370,34 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="py-4 px-2 text-xs font-semibold text-ink/75">
                           {fmtPKTShort(e.startAt)}
+                          {isPastStart && (
+                            <span className="block mt-1 px-1.5 py-0.5 bg-rose text-white text-[10px] font-extrabold rounded text-center">
+                              Past Start Time
+                            </span>
+                          )}
                         </td>
                         <td className="py-4 px-2 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {/* Quick Approve Button */}
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              disabled={isBusy}
-                              onClick={() => handleQuickDecision(e.id, e.title, "APPROVE")}
-                              className="bg-emerald hover:bg-emerald/90 text-white shadow-hard-sm"
-                              title="Instantly Approve Proposal"
-                            >
-                              <Check className="w-4 h-4 mr-1" /> Approve
-                            </Button>
+                            {isPastStart ? (
+                              <span
+                                className="px-2.5 py-1 bg-mist/60 text-ink/40 text-xs font-bold rounded border border-ink/20 cursor-not-allowed"
+                                title="Cannot approve: Event start time has already passed. Under university rules, expired proposals cannot be approved."
+                              >
+                                Expired Start
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                disabled={isBusy}
+                                onClick={() => handleQuickDecision(e.id, e.title, "APPROVE")}
+                                className="bg-emerald hover:bg-emerald/90 text-white shadow-hard-sm"
+                                title="Instantly Approve Proposal"
+                              >
+                                <Check className="w-4 h-4 mr-1" /> Approve
+                              </Button>
+                            )}
 
                             {/* Quick Decline Button */}
                             <Button

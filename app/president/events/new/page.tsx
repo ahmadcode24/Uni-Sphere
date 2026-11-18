@@ -29,6 +29,24 @@ export default function NewEventPage() {
   });
 
   useEffect(() => {
+    // Set sensible future default dates (tomorrow in PKT)
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const dd = String(tomorrow.getDate()).padStart(2, "0");
+    const defaultStart = `${yyyy}-${mm}-${dd}T10:00`;
+    const defaultEnd = `${yyyy}-${mm}-${dd}T14:00`;
+    const defaultDeadline = `${yyyy}-${mm}-${dd}T09:00`;
+
+    setForm((prev) => ({
+      ...prev,
+      startAt: prev.startAt || defaultStart,
+      endAt: prev.endAt || defaultEnd,
+      registrationDeadline: prev.registrationDeadline || defaultDeadline,
+    }));
+  }, []);
+
+  useEffect(() => {
     async function load() {
       try {
         const uRes = await fetch("/api/auth/me");
@@ -50,6 +68,15 @@ export default function NewEventPage() {
   const handleSave = async (submitForApproval: boolean) => {
     setError("");
     setSaving(true);
+
+    if (form.startAt) {
+      const startDate = new Date(form.startAt);
+      if (startDate <= new Date()) {
+        setError("Event start date & time must be in the future (at least 30 minutes ahead) so administration can review and students can register.");
+        setSaving(false);
+        return;
+      }
+    }
 
     try {
       const res = await fetch("/api/events", {
