@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Home,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { useLive } from "@/lib/use-live";
 
@@ -70,9 +71,11 @@ export const AppShell: React.FC<AppShellProps> = ({ role, user, title, children 
       { label: "Society Profile", href: "/president/society", icon: <Compass className="w-5 h-5" /> },
       { label: "Members", href: "/president/members", icon: <Users className="w-5 h-5" /> },
       { label: "Events & Proposals", href: "/president/events", icon: <Calendar className="w-5 h-5" /> },
+      { label: "Mega Events", href: "/president/mega-events", icon: <Sparkles className="w-5 h-5" /> },
     ],
     ADMIN: [
       { label: "Admin Overview", href: "/admin", icon: <ShieldAlert className="w-5 h-5" /> },
+      { label: "Mega Events", href: "/admin/mega-events", icon: <Sparkles className="w-5 h-5" /> },
       { label: "Event Proposals", href: "/admin/proposals", icon: <Calendar className="w-5 h-5" /> },
       { label: "All Societies", href: "/admin/societies", icon: <Compass className="w-5 h-5" /> },
       { label: "Budget & Metrics", href: "/admin/monitoring", icon: <DollarSign className="w-5 h-5" /> },
