@@ -10,14 +10,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        paper: "var(--paper)",
-        surface: "var(--surface)",
-        ink: "var(--ink)",
-        emerald: "var(--emerald)",
-        marigold: "var(--marigold)",
-        rose: "var(--rose)",
-        sky: "var(--sky)",
-        mist: "var(--mist)",
+        paper: "#EEF2EC",
+        surface: "#FFFFFF",
+        ink: "#16202B",
+        emerald: "#0B7A55",
+        marigold: "#FFB703",
+        rose: "#E63462",
+        sky: "#3FA7D6",
+        mist: "#D9E2DA",
       },
       fontFamily: {
         display: ["var(--font-bricolage)", "sans-serif"],
