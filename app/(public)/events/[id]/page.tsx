@@ -86,6 +86,12 @@ export default function PublicEventDetailPage({ params }: { params: { id: string
           if (uData.user?.role === "STUDENT") {
             router.replace(`/student/events/${params.id}`);
             return;
+          } else if (uData.user?.role === "PRESIDENT") {
+            router.replace(`/president/events/${params.id}`);
+            return;
+          } else if (uData.user?.role === "ADMIN") {
+            router.replace(`/admin`);
+            return;
           }
         }
       } catch {

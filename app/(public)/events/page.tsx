@@ -35,6 +35,12 @@ export default function BrowseEventsPage() {
           if (uData.user?.role === "STUDENT") {
             router.replace("/student/events");
             return;
+          } else if (uData.user?.role === "PRESIDENT") {
+            router.replace("/president/events");
+            return;
+          } else if (uData.user?.role === "ADMIN") {
+            router.replace("/admin");
+            return;
           }
         }
 

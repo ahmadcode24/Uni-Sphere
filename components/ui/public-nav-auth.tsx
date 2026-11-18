@@ -51,9 +51,16 @@ export function PublicNavAuth() {
         ? "/admin"
         : "/student";
 
+    const eventsHref =
+      user.role === "PRESIDENT"
+        ? "/president/events"
+        : user.role === "ADMIN"
+        ? "/admin"
+        : "/student/events";
+
     return (
       <div className="flex items-center gap-2">
-        <Link href="/events">
+        <Link href={eventsHref}>
           <Button variant="ghost" size="sm">
             Browse events
           </Button>
