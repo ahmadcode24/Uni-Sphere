@@ -76,8 +76,8 @@ async function runAuthTests() {
 
   // 4. Test Correct OTP Verification
   console.log("\n4. Testing Correct OTP Verification...");
-  const testAdmin = await prisma.user.findUnique({
-    where: { email: "admin@unisphere.test" },
+  const testAdmin = await prisma.user.findFirst({
+    where: { role: "ADMIN" },
   });
   if (!testAdmin) throw new Error("Admin user not found");
 

@@ -130,7 +130,7 @@ All roles authenticate via email and password, followed by a **6-digit verificat
 
 | Role | Email | Password | Pre-seeded Context |
 |---|---|---|---|
-| **Admin** | `admin@unisphere.test` | `Admin@12345` | Campus-wide overview, review pending proposals |
+| **Admin** | `ahmadcode24@gmail.com` | `Admin@12345` | Campus-wide overview, review pending proposals |
 | **President 1** | `president1@unisphere.test` | `Pass@12345` | ACM Student Chapter (HackNova 2026, workshops) |
 | **President 2** | `president2@unisphere.test` | `Pass@12345` | Dramatic & Arts Guild (Theatre Fest, Open Mic) |
 | **Students** | `student1@unisphere.test` … `student6@unisphere.test` | `Pass@12345` | Varying memberships, registrations, tasks |
@@ -147,7 +147,7 @@ All roles authenticate via email and password, followed by a **6-digit verificat
    - Go to **Members** -> Approve the student request -> Assign "Core Member" label.
    - Go to **Events** -> Create a new event with PKT dates and proposed budget -> Click **Submit for Approval**.
 3. **Admin Review**:
-   - In a third window, log in as `admin@unisphere.test`.
+   - In a third window, log in as `ahmadcode24@gmail.com`.
    - Open **Event Proposals** -> Review details and proposed budget -> Click **Approve**.
 4. **Public Discovery & Live Concurrency**:
    - Open `/events/[id]` as an unauthenticated user -> Click **Register to Attend** -> Log in with preserved `next` parameter -> Register.

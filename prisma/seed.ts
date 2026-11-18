@@ -31,7 +31,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       name: "UniSphere Admin",
-      email: "admin@unisphere.test",
+      email: "ahmadcode24@gmail.com",
       passwordHash: adminPass,
       role: "ADMIN",
     },
@@ -415,7 +415,7 @@ async function main() {
   });
 
   console.log("✅ Seed completed successfully!");
-  console.log("   Admin: admin@unisphere.test (Admin@12345)");
+  console.log("   Admin: ahmadcode24@gmail.com (Admin@12345)");
   console.log("   Presidents: president1@unisphere.test, president2@unisphere.test (Pass@12345)");
   console.log("   Students: student1@unisphere.test .. student6@unisphere.test (Pass@12345)");
 }
