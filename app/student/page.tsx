@@ -26,6 +26,7 @@ export default function StudentDashboard() {
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [supervisedSubEvents, setSupervisedSubEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,11 +40,12 @@ export default function StudentDashboard() {
         const uData = await userRes.json();
         setUser(uData.user);
 
-        // Fetch student registrations, invitations, tasks
-        const [regRes, invRes, taskRes] = await Promise.all([
+        // Fetch student registrations, invitations, tasks, and supervised sub-events
+        const [regRes, invRes, taskRes, supRes] = await Promise.all([
           fetch("/api/events/my-registrations"),
           fetch("/api/invitations/my"),
           fetch("/api/tasks/my"),
+          fetch("/api/student/supervised"),
         ]);
 
         if (regRes.ok) {
@@ -57,6 +59,10 @@ export default function StudentDashboard() {
         if (taskRes.ok) {
           const tData = await taskRes.json();
           setTasks(tData.tasks || []);
+        }
+        if (supRes.ok) {
+          const sData = await supRes.json();
+          setSupervisedSubEvents(sData.subEvents || []);
         }
       } catch {
         // ignore
@@ -250,6 +256,67 @@ export default function StudentDashboard() {
               </Link>
             </div>
           </Card>
+        </div>
+
+        {/* SECTION: My Supervised Sub-events (Task 2) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b-2 border-mist">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-marigold" />
+              <h3 className="font-display font-bold text-xl text-ink">
+                My Supervised Sub-events ({supervisedSubEvents.length})
+              </h3>
+            </div>
+            <span className="text-xs font-bold text-ink/60">
+              Assigned by Society Presidents
+            </span>
+          </div>
+
+          {supervisedSubEvents.length === 0 ? (
+            <Card variant="surface" className="p-6 text-center text-xs text-ink/60 border border-dashed border-ink/20">
+              You are not supervising any sub-events right now.
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {supervisedSubEvents.map((sub) => (
+                <Card key={sub.id} variant="surface" className="p-5 flex flex-col justify-between hover:shadow-hard-md transition-shadow">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-extrabold uppercase text-ink/60 block">
+                      Part of {sub.megaEvent?.title}
+                    </span>
+                    <h4 className="font-display font-extrabold text-xl text-ink leading-tight">
+                      {sub.title}
+                    </h4>
+                    <p className="text-xs text-ink/75 line-clamp-2">{sub.description}</p>
+                    <div className="flex items-center gap-3 text-xs font-semibold text-ink/70 pt-1">
+                      <span>📅 {sub.date}</span>
+                      <span>•</span>
+                      <span>📍 {sub.venue}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t-2 border-mist">
+                    <div className="flex items-center justify-between text-xs font-bold mb-1">
+                      <span>Preparation Checklist</span>
+                      <span>{sub.completedTasks}/{sub.totalTasks} ({sub.progressPercent}%)</span>
+                    </div>
+                    <div className="w-full bg-paper h-2 rounded-full border border-ink overflow-hidden mb-3">
+                      <div
+                        className="bg-emerald h-full transition-all"
+                        style={{ width: `${sub.progressPercent}%` }}
+                      />
+                    </div>
+
+                    <Link href={`/student/supervised/${sub.id}`}>
+                      <Button variant="primary" size="sm" className="w-full">
+                        Manage Sub-event Checklist <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

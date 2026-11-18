@@ -48,10 +48,14 @@ export default function StudentTasksPage() {
     loadData();
   }, [router]);
 
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
-    setActionLoading(taskId);
+  const handleStatusChange = async (task: any, newStatus: string) => {
+    setActionLoading(task.id);
     try {
-      const res = await fetch(`/api/tasks/${taskId}`, {
+      const endpoint = task.subEventId
+        ? `/api/student/sub-tasks/${task.id}/status`
+        : `/api/tasks/${task.id}`;
+
+      const res = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -107,7 +111,9 @@ export default function StudentTasksPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold px-2 py-0.5 bg-paper rounded border border-ink/40">
-                        {task.event.society?.name} • {task.event.title}
+                        {task.subEvent
+                          ? `Sub-event: ${task.subEvent.title} · ${task.subEvent.megaEvent?.title}`
+                          : `${task.event?.society?.name || "Society"} • ${task.event?.title || "Event"}`}
                       </span>
                       <Badge variant={task.priority === "HIGH" ? "high" : task.priority === "MEDIUM" ? "medium" : "low"}>
                         {task.priority} Priority
@@ -149,7 +155,7 @@ export default function StudentTasksPage() {
                           variant="ghost"
                           className="text-xs border-ink/20"
                           disabled={actionLoading === task.id}
-                          onClick={() => handleStatusChange(task.id, "TODO")}
+                          onClick={() => handleStatusChange(task, "TODO")}
                         >
                           To Do
                         </Button>
@@ -160,7 +166,7 @@ export default function StudentTasksPage() {
                           variant="secondary"
                           className="text-xs"
                           disabled={actionLoading === task.id}
-                          onClick={() => handleStatusChange(task.id, "IN_PROGRESS")}
+                          onClick={() => handleStatusChange(task, "IN_PROGRESS")}
                         >
                           In Progress
                         </Button>
@@ -171,7 +177,7 @@ export default function StudentTasksPage() {
                           variant="primary"
                           className="text-xs"
                           disabled={actionLoading === task.id}
-                          onClick={() => handleStatusChange(task.id, "COMPLETED")}
+                          onClick={() => handleStatusChange(task, "COMPLETED")}
                         >
                           Mark Completed ✓
                         </Button>
